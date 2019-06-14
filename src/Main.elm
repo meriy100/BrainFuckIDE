@@ -37,7 +37,7 @@ main =
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { code = Code ""
-      , tape = Tape.Tape Tape.UnUsed 2 Tape.UnUsed
+      , tape = Tape.init
       }
     , Cmd.none
     )

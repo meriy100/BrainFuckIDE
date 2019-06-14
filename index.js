@@ -4874,7 +4874,9 @@ var author$project$BrainFuck$Tape$Tape = F3(
 	function (a, b, c) {
 		return {$: 'Tape', a: a, b: b, c: c};
 	});
-var author$project$BrainFuck$Tape$UnUsed = {$: 'UnUsed'};
+var author$project$BrainFuck$Tape$UnUsedLeft = {$: 'UnUsedLeft'};
+var author$project$BrainFuck$Tape$UnUsedRight = {$: 'UnUsedRight'};
+var author$project$BrainFuck$Tape$init = A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsedLeft, 0, author$project$BrainFuck$Tape$UnUsedRight);
 var author$project$Main$Code = function (a) {
 	return {$: 'Code', a: a};
 };
@@ -5362,7 +5364,7 @@ var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
 		{
 			code: author$project$Main$Code(''),
-			tape: A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsed, 2, author$project$BrainFuck$Tape$UnUsed)
+			tape: author$project$BrainFuck$Tape$init
 		},
 		elm$core$Platform$Cmd$none);
 };
@@ -5371,72 +5373,64 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (model) {
 	return elm$core$Platform$Sub$none;
 };
-var author$project$BrainFuck$Tape$dec = function (memory) {
-	if (memory.$ === 'Tape') {
-		var left = memory.a;
-		var value = memory.b;
-		var right = memory.c;
-		return A3(author$project$BrainFuck$Tape$Tape, left, value - 1, right);
+var author$project$BrainFuck$Tape$dec = function (_n0) {
+	var left = _n0.a;
+	var value = _n0.b;
+	var right = _n0.c;
+	return (!value) ? A3(author$project$BrainFuck$Tape$Tape, left, 255, right) : A3(author$project$BrainFuck$Tape$Tape, left, value - 1, right);
+};
+var author$project$BrainFuck$Tape$inc = function (_n0) {
+	var left = _n0.a;
+	var value = _n0.b;
+	var right = _n0.c;
+	return (value === 255) ? A3(author$project$BrainFuck$Tape$Tape, left, 0, right) : A3(author$project$BrainFuck$Tape$Tape, left, value + 1, right);
+};
+var author$project$BrainFuck$Tape$Right = F2(
+	function (a, b) {
+		return {$: 'Right', a: a, b: b};
+	});
+var author$project$BrainFuck$Tape$pointerDec = function (_n0) {
+	var left = _n0.a;
+	var value = _n0.b;
+	var right = _n0.c;
+	if (left.$ === 'Left') {
+		var l = left.a;
+		var v = left.b;
+		return A3(
+			author$project$BrainFuck$Tape$Tape,
+			l,
+			v,
+			A2(author$project$BrainFuck$Tape$Right, value, right));
 	} else {
-		return author$project$BrainFuck$Tape$UnUsed;
+		return A3(
+			author$project$BrainFuck$Tape$Tape,
+			author$project$BrainFuck$Tape$UnUsedLeft,
+			0,
+			A2(author$project$BrainFuck$Tape$Right, value, right));
 	}
 };
-var author$project$BrainFuck$Tape$inc = function (memory) {
-	if (memory.$ === 'Tape') {
-		var left = memory.a;
-		var value = memory.b;
-		var right = memory.c;
-		return A3(author$project$BrainFuck$Tape$Tape, left, value + 1, right);
+var author$project$BrainFuck$Tape$Left = F2(
+	function (a, b) {
+		return {$: 'Left', a: a, b: b};
+	});
+var author$project$BrainFuck$Tape$pointerInc = function (_n0) {
+	var left = _n0.a;
+	var value = _n0.b;
+	var right = _n0.c;
+	if (right.$ === 'Right') {
+		var v = right.a;
+		var r = right.b;
+		return A3(
+			author$project$BrainFuck$Tape$Tape,
+			A2(author$project$BrainFuck$Tape$Left, left, value),
+			v,
+			r);
 	} else {
-		return author$project$BrainFuck$Tape$UnUsed;
-	}
-};
-var author$project$BrainFuck$Tape$pointerDec = function (memory) {
-	if (memory.$ === 'Tape') {
-		var left = memory.a;
-		var value = memory.b;
-		var right = memory.c;
-		if (left.$ === 'Tape') {
-			var l = left.a;
-			var v = left.b;
-			return A3(
-				author$project$BrainFuck$Tape$Tape,
-				l,
-				v,
-				A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsed, value, right));
-		} else {
-			return A3(
-				author$project$BrainFuck$Tape$Tape,
-				author$project$BrainFuck$Tape$UnUsed,
-				0,
-				A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsed, value, right));
-		}
-	} else {
-		return author$project$BrainFuck$Tape$UnUsed;
-	}
-};
-var author$project$BrainFuck$Tape$pointerInc = function (memory) {
-	if (memory.$ === 'Tape') {
-		var left = memory.a;
-		var value = memory.b;
-		var right = memory.c;
-		if (right.$ === 'Tape') {
-			var v = right.b;
-			var r = right.c;
-			return A3(
-				author$project$BrainFuck$Tape$Tape,
-				A3(author$project$BrainFuck$Tape$Tape, left, value, author$project$BrainFuck$Tape$UnUsed),
-				v,
-				r);
-		} else {
-			return A3(
-				author$project$BrainFuck$Tape$Tape,
-				A3(author$project$BrainFuck$Tape$Tape, left, value, author$project$BrainFuck$Tape$UnUsed),
-				0,
-				author$project$BrainFuck$Tape$UnUsed);
-		}
-	} else {
-		return author$project$BrainFuck$Tape$UnUsed;
+		return A3(
+			author$project$BrainFuck$Tape$Tape,
+			A2(author$project$BrainFuck$Tape$Left, left, value),
+			0,
+			author$project$BrainFuck$Tape$UnUsedRight);
 	}
 };
 var author$project$Main$update = F2(
@@ -5489,50 +5483,77 @@ var author$project$Main$Dec = {$: 'Dec'};
 var author$project$Main$Inc = {$: 'Inc'};
 var author$project$Main$PointerDec = {$: 'PointerDec'};
 var author$project$Main$PointerInc = {$: 'PointerInc'};
-var author$project$BrainFuck$Tape$map = F2(
-	function (f, tape) {
-		if (tape.$ === 'Tape') {
-			var left = tape.a;
-			var value = tape.b;
-			var right = tape.c;
-			return A3(
-				author$project$BrainFuck$Tape$Tape,
-				A2(author$project$BrainFuck$Tape$map, f, left),
-				f(value),
-				A2(author$project$BrainFuck$Tape$map, f, right));
+var author$project$BrainFuck$Tape$leftMap = F2(
+	function (f, left) {
+		if (left.$ === 'Left') {
+			var l = left.a;
+			var value = left.b;
+			return A2(
+				author$project$BrainFuck$Tape$Left,
+				A2(author$project$BrainFuck$Tape$leftMap, f, l),
+				f(value));
 		} else {
-			return author$project$BrainFuck$Tape$UnUsed;
+			return author$project$BrainFuck$Tape$UnUsedLeft;
+		}
+	});
+var author$project$BrainFuck$Tape$rightMap = F2(
+	function (f, right) {
+		if (right.$ === 'Right') {
+			var value = right.a;
+			var r = right.b;
+			return A2(
+				author$project$BrainFuck$Tape$Right,
+				f(value),
+				A2(author$project$BrainFuck$Tape$rightMap, f, r));
+		} else {
+			return author$project$BrainFuck$Tape$UnUsedRight;
 		}
 	});
 var author$project$BrainFuck$Tape$currentOrMap = F3(
 	function (f, g, tape) {
-		if (tape.$ === 'Tape') {
-			var left = tape.a;
-			var value = tape.b;
-			var right = tape.c;
-			return A3(
-				author$project$BrainFuck$Tape$Tape,
-				A2(author$project$BrainFuck$Tape$map, g, left),
-				f(value),
-				A2(author$project$BrainFuck$Tape$map, g, right));
-		} else {
-			return author$project$BrainFuck$Tape$UnUsed;
-		}
+		var left = tape.a;
+		var value = tape.b;
+		var right = tape.c;
+		return A3(
+			author$project$BrainFuck$Tape$Tape,
+			A2(author$project$BrainFuck$Tape$leftMap, g, left),
+			f(value),
+			A2(author$project$BrainFuck$Tape$rightMap, g, right));
 	});
-var author$project$BrainFuck$Tape$toList = function (memory) {
-	if (memory.$ === 'Tape') {
-		var left = memory.a;
-		var value = memory.b;
-		var right = memory.c;
+var author$project$BrainFuck$Tape$leftToList = function (left) {
+	if (left.$ === 'Left') {
+		var l = left.a;
+		var value = left.b;
 		return _Utils_ap(
-			author$project$BrainFuck$Tape$toList(left),
-			A2(
-				elm$core$List$cons,
-				value,
-				author$project$BrainFuck$Tape$toList(right)));
+			author$project$BrainFuck$Tape$leftToList(l),
+			_List_fromArray(
+				[value]));
 	} else {
 		return _List_Nil;
 	}
+};
+var author$project$BrainFuck$Tape$rightToList = function (right) {
+	if (right.$ === 'Right') {
+		var value = right.a;
+		var r = right.b;
+		return A2(
+			elm$core$List$cons,
+			value,
+			author$project$BrainFuck$Tape$rightToList(r));
+	} else {
+		return _List_Nil;
+	}
+};
+var author$project$BrainFuck$Tape$toList = function (_n0) {
+	var left = _n0.a;
+	var value = _n0.b;
+	var right = _n0.c;
+	return _Utils_ap(
+		author$project$BrainFuck$Tape$leftToList(left),
+		A2(
+			elm$core$List$cons,
+			value,
+			author$project$BrainFuck$Tape$rightToList(right)));
 };
 var elm$core$Basics$composeL = F3(
 	function (g, f, x) {
