@@ -5433,6 +5433,27 @@ var author$project$BrainFuck$Tape$pointerInc = function (_n0) {
 			author$project$BrainFuck$Tape$UnUsedRight);
 	}
 };
+var author$project$BrainFuck$Tape$while = F2(
+	function (f, tape) {
+		_while:
+		while (true) {
+			var value = tape.b;
+			if (!value) {
+				return tape;
+			} else {
+				var $temp$f = f,
+					$temp$tape = f(tape);
+				f = $temp$f;
+				tape = $temp$tape;
+				continue _while;
+			}
+		}
+	});
+var elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
 var author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5469,12 +5490,29 @@ var author$project$Main$update = F2(
 							tape: author$project$BrainFuck$Tape$pointerInc(model.tape)
 						}),
 					elm$core$Platform$Cmd$none);
-			default:
+			case 'PointerDec':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
 							tape: author$project$BrainFuck$Tape$pointerDec(model.tape)
+						}),
+					elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							tape: A2(
+								author$project$BrainFuck$Tape$while,
+								A2(
+									elm$core$Basics$composeR,
+									author$project$BrainFuck$Tape$dec,
+									A2(
+										elm$core$Basics$composeR,
+										author$project$BrainFuck$Tape$pointerInc,
+										A2(elm$core$Basics$composeR, author$project$BrainFuck$Tape$inc, author$project$BrainFuck$Tape$pointerDec))),
+								model.tape)
 						}),
 					elm$core$Platform$Cmd$none);
 		}
@@ -5483,6 +5521,7 @@ var author$project$Main$Dec = {$: 'Dec'};
 var author$project$Main$Inc = {$: 'Inc'};
 var author$project$Main$PointerDec = {$: 'PointerDec'};
 var author$project$Main$PointerInc = {$: 'PointerInc'};
+var author$project$Main$TestWhile = {$: 'TestWhile'};
 var author$project$BrainFuck$Tape$leftMap = F2(
 	function (f, left) {
 		if (left.$ === 'Left') {
@@ -5705,6 +5744,16 @@ var author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								elm$html$Html$text('>')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$TestWhile)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('[->+<]')
 							]))
 					])),
 				A2(
@@ -9947,4 +9996,4 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"ChangeCode":["String.String"],"Inc":[],"Dec":[],"PointerInc":[],"PointerDec":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"ChangeCode":["String.String"],"Inc":[],"Dec":[],"PointerInc":[],"PointerDec":[],"TestWhile":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));

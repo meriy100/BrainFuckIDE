@@ -23,6 +23,7 @@ type Msg
     | Dec
     | PointerInc
     | PointerDec
+    | TestWhile
 
 
 main =
@@ -61,6 +62,7 @@ view model =
             , Html.button [ Events.onClick Dec ] [ Html.text "-" ]
             , Html.button [ Events.onClick PointerDec ] [ Html.text "<" ]
             , Html.button [ Events.onClick PointerInc ] [ Html.text ">" ]
+            , Html.button [ Events.onClick TestWhile ] [ Html.text "[->+<]" ]
             ]
         , Html.table []
             [ tdListView model.tape
@@ -86,6 +88,8 @@ update msg model =
 
         PointerDec ->
             ( { model | tape = Tape.pointerDec model.tape }, Cmd.none )
+        TestWhile ->
+            ( { model | tape = Tape.while (Tape.dec >> Tape.pointerInc >> Tape.inc >> Tape.pointerDec) model.tape }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

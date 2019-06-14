@@ -90,3 +90,10 @@ pointerDec (Tape left value right) =
        UnUsedLeft ->
            Tape UnUsedLeft 0 (Right value right)
 
+while : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
+while f (Tape _ value _ as tape) =
+    if value == 0 then
+      tape
+    else
+        while f (f tape)
+
