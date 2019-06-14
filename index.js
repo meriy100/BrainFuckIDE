@@ -4870,6 +4870,11 @@ function _Browser_load(url)
 		}
 	}));
 }
+var author$project$BrainFuck$Tape$Tape = F3(
+	function (a, b, c) {
+		return {$: 'Tape', a: a, b: b, c: c};
+	});
+var author$project$BrainFuck$Tape$UnUsed = {$: 'UnUsed'};
 var author$project$Main$Code = function (a) {
 	return {$: 'Code', a: a};
 };
@@ -5356,7 +5361,8 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
 		{
-			code: author$project$Main$Code('')
+			code: author$project$Main$Code(''),
+			tape: A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsed, 2, author$project$BrainFuck$Tape$UnUsed)
 		},
 		elm$core$Platform$Cmd$none);
 };
@@ -5365,17 +5371,178 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (model) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$BrainFuck$Tape$dec = function (memory) {
+	if (memory.$ === 'Tape') {
+		var left = memory.a;
+		var value = memory.b;
+		var right = memory.c;
+		return A3(author$project$BrainFuck$Tape$Tape, left, value - 1, right);
+	} else {
+		return author$project$BrainFuck$Tape$UnUsed;
+	}
+};
+var author$project$BrainFuck$Tape$inc = function (memory) {
+	if (memory.$ === 'Tape') {
+		var left = memory.a;
+		var value = memory.b;
+		var right = memory.c;
+		return A3(author$project$BrainFuck$Tape$Tape, left, value + 1, right);
+	} else {
+		return author$project$BrainFuck$Tape$UnUsed;
+	}
+};
+var author$project$BrainFuck$Tape$pointerDec = function (memory) {
+	if (memory.$ === 'Tape') {
+		var left = memory.a;
+		var value = memory.b;
+		var right = memory.c;
+		if (left.$ === 'Tape') {
+			var l = left.a;
+			var v = left.b;
+			return A3(
+				author$project$BrainFuck$Tape$Tape,
+				l,
+				v,
+				A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsed, value, right));
+		} else {
+			return A3(
+				author$project$BrainFuck$Tape$Tape,
+				author$project$BrainFuck$Tape$UnUsed,
+				0,
+				A3(author$project$BrainFuck$Tape$Tape, author$project$BrainFuck$Tape$UnUsed, value, right));
+		}
+	} else {
+		return author$project$BrainFuck$Tape$UnUsed;
+	}
+};
+var author$project$BrainFuck$Tape$pointerInc = function (memory) {
+	if (memory.$ === 'Tape') {
+		var left = memory.a;
+		var value = memory.b;
+		var right = memory.c;
+		if (right.$ === 'Tape') {
+			var v = right.b;
+			var r = right.c;
+			return A3(
+				author$project$BrainFuck$Tape$Tape,
+				A3(author$project$BrainFuck$Tape$Tape, left, value, author$project$BrainFuck$Tape$UnUsed),
+				v,
+				r);
+		} else {
+			return A3(
+				author$project$BrainFuck$Tape$Tape,
+				A3(author$project$BrainFuck$Tape$Tape, left, value, author$project$BrainFuck$Tape$UnUsed),
+				0,
+				author$project$BrainFuck$Tape$UnUsed);
+		}
+	} else {
+		return author$project$BrainFuck$Tape$UnUsed;
+	}
+};
 var author$project$Main$update = F2(
 	function (msg, model) {
-		var str = msg.a;
-		return _Utils_Tuple2(
-			_Utils_update(
-				model,
-				{
-					code: author$project$Main$Code(str)
-				}),
-			elm$core$Platform$Cmd$none);
+		switch (msg.$) {
+			case 'ChangeCode':
+				var str = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							code: author$project$Main$Code(str)
+						}),
+					elm$core$Platform$Cmd$none);
+			case 'Inc':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							tape: author$project$BrainFuck$Tape$inc(model.tape)
+						}),
+					elm$core$Platform$Cmd$none);
+			case 'Dec':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							tape: author$project$BrainFuck$Tape$dec(model.tape)
+						}),
+					elm$core$Platform$Cmd$none);
+			case 'PointerInc':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							tape: author$project$BrainFuck$Tape$pointerInc(model.tape)
+						}),
+					elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							tape: author$project$BrainFuck$Tape$pointerDec(model.tape)
+						}),
+					elm$core$Platform$Cmd$none);
+		}
 	});
+var author$project$Main$Dec = {$: 'Dec'};
+var author$project$Main$Inc = {$: 'Inc'};
+var author$project$Main$PointerDec = {$: 'PointerDec'};
+var author$project$Main$PointerInc = {$: 'PointerInc'};
+var author$project$BrainFuck$Tape$map = F2(
+	function (f, tape) {
+		if (tape.$ === 'Tape') {
+			var left = tape.a;
+			var value = tape.b;
+			var right = tape.c;
+			return A3(
+				author$project$BrainFuck$Tape$Tape,
+				A2(author$project$BrainFuck$Tape$map, f, left),
+				f(value),
+				A2(author$project$BrainFuck$Tape$map, f, right));
+		} else {
+			return author$project$BrainFuck$Tape$UnUsed;
+		}
+	});
+var author$project$BrainFuck$Tape$currentOrMap = F3(
+	function (f, g, tape) {
+		if (tape.$ === 'Tape') {
+			var left = tape.a;
+			var value = tape.b;
+			var right = tape.c;
+			return A3(
+				author$project$BrainFuck$Tape$Tape,
+				A2(author$project$BrainFuck$Tape$map, g, left),
+				f(value),
+				A2(author$project$BrainFuck$Tape$map, g, right));
+		} else {
+			return author$project$BrainFuck$Tape$UnUsed;
+		}
+	});
+var author$project$BrainFuck$Tape$toList = function (memory) {
+	if (memory.$ === 'Tape') {
+		var left = memory.a;
+		var value = memory.b;
+		var right = memory.c;
+		return _Utils_ap(
+			author$project$BrainFuck$Tape$toList(left),
+			A2(
+				elm$core$List$cons,
+				value,
+				author$project$BrainFuck$Tape$toList(right)));
+	} else {
+		return _List_Nil;
+	}
+};
+var elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var elm$core$List$singleton = function (value) {
+	return _List_fromArray(
+		[value]);
+};
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5391,14 +5558,79 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 			return 3;
 	}
 };
-var elm$html$Html$div = _VirtualDom_node('div');
-var elm$html$Html$h1 = _VirtualDom_node('h1');
+var elm$html$Html$td = _VirtualDom_node('td');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
+var author$project$Main$tdListView = function (tape) {
+	return author$project$BrainFuck$Tape$toList(
+		A3(
+			author$project$BrainFuck$Tape$currentOrMap,
+			A2(
+				elm$core$Basics$composeL,
+				A2(
+					elm$core$Basics$composeL,
+					A2(
+						elm$core$Basics$composeL,
+						elm$html$Html$td(
+							_List_fromArray(
+								[
+									A2(elm$html$Html$Attributes$style, 'color', 'red')
+								])),
+						elm$core$List$singleton),
+					elm$html$Html$text),
+				elm$core$String$fromInt),
+			A2(
+				elm$core$Basics$composeL,
+				A2(
+					elm$core$Basics$composeL,
+					A2(
+						elm$core$Basics$composeL,
+						elm$html$Html$td(_List_Nil),
+						elm$core$List$singleton),
+					elm$html$Html$text),
+				elm$core$String$fromInt),
+			tape));
+};
+var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var elm$html$Html$table = _VirtualDom_node('table');
+var elm$html$Html$tr = _VirtualDom_node('tr');
+var elm$json$Json$Encode$string = _Json_wrap;
+var elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$string(string));
+	});
+var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
 var author$project$Main$view = function (model) {
 	return A2(
 		elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('container')
+			]),
 		_List_fromArray(
 			[
 				A2(
@@ -5407,6 +5639,62 @@ var author$project$Main$view = function (model) {
 				_List_fromArray(
 					[
 						elm$html$Html$text('Hello BF World!')
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$Inc)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('+')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$Dec)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('-')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$PointerDec)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('<')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$PointerInc)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('>')
+							]))
+					])),
+				A2(
+				elm$html$Html$table,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$tr,
+						_List_Nil,
+						author$project$Main$tdListView(model.tape))
 					]))
 			]));
 };
@@ -5708,14 +5996,6 @@ var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$p = _VirtualDom_node('p');
 var elm$html$Html$ul = _VirtualDom_node('ul');
-var elm$json$Json$Encode$string = _Json_wrap;
-var elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$string(string));
-	});
 var elm$html$Html$Attributes$href = function (url) {
 	return A2(
 		elm$html$Html$Attributes$stringProperty,
@@ -5771,26 +6051,6 @@ var elm$browser$Debugger$Overlay$viewBadMetadata = function (_n0) {
 };
 var elm$browser$Debugger$Overlay$Cancel = {$: 'Cancel'};
 var elm$browser$Debugger$Overlay$Proceed = {$: 'Proceed'};
-var elm$html$Html$button = _VirtualDom_node('button');
-var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
-};
 var elm$browser$Debugger$Overlay$viewButtons = function (buttons) {
 	var btn = F2(
 		function (msg, string) {
@@ -6572,11 +6832,6 @@ var elm$browser$Debugger$Expando$viewTinyRecordHelp = F3(
 			}
 		}
 	});
-var elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
 var elm$core$Tuple$second = function (_n0) {
 	var y = _n0.b;
 	return y;
@@ -6991,7 +7246,6 @@ var elm$browser$Debugger$Expando$viewSequenceOpen = function (values) {
 var elm$browser$Debugger$Main$ExpandoMsg = function (a) {
 	return {$: 'ExpandoMsg', a: a};
 };
-var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
 var elm$html$Html$Attributes$title = elm$html$Html$Attributes$stringProperty('title');
 var elm$browser$Debugger$History$viewMessage = F3(
 	function (currentIndex, index, msg) {
@@ -9672,4 +9926,4 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"ChangeCode":["String.String"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"ChangeCode":["String.String"],"Inc":[],"Dec":[],"PointerInc":[],"PointerDec":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
