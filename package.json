@@ -1,0 +1,19 @@
+{
+  "name": "brainfuckide",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "elm-live": "elm-live src/Main.elm --pushstate -- --output=index.js --debug"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/meriy100/BrainFuckIDE.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/meriy100/BrainFuckIDE/issues"
+  },
+  "homepage": "https://github.com/meriy100/BrainFuckIDE#readme"
+}
