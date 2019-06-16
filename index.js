@@ -5373,6 +5373,29 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (model) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$BrainFuck$Parser$dropWhileEnd = function (cs) {
+	dropWhileEnd:
+	while (true) {
+		if (cs.b) {
+			var c = cs.a;
+			var cs_ = cs.b;
+			switch (c.valueOf()) {
+				case '[':
+					var $temp$cs = author$project$BrainFuck$Parser$dropWhileEnd(cs_);
+					cs = $temp$cs;
+					continue dropWhileEnd;
+				case ']':
+					return cs_;
+				default:
+					var $temp$cs = cs_;
+					cs = $temp$cs;
+					continue dropWhileEnd;
+			}
+		} else {
+			return _List_Nil;
+		}
+	}
+};
 var author$project$BrainFuck$Tape$dec = function (_n0) {
 	var left = _n0.a;
 	var value = _n0.b;
@@ -5384,6 +5407,9 @@ var author$project$BrainFuck$Tape$inc = function (_n0) {
 	var value = _n0.b;
 	var right = _n0.c;
 	return (value === 255) ? A3(author$project$BrainFuck$Tape$Tape, left, 0, right) : A3(author$project$BrainFuck$Tape$Tape, left, value + 1, right);
+};
+var author$project$BrainFuck$Tape$none = function (tape) {
+	return tape;
 };
 var author$project$BrainFuck$Tape$Right = F2(
 	function (a, b) {
@@ -5433,113 +5459,6 @@ var author$project$BrainFuck$Tape$pointerInc = function (_n0) {
 			author$project$BrainFuck$Tape$UnUsedRight);
 	}
 };
-var author$project$BrainFuck$Parser$charToCommand = function (c) {
-	switch (c.valueOf()) {
-		case '+':
-			return author$project$BrainFuck$Tape$inc;
-		case '-':
-			return author$project$BrainFuck$Tape$dec;
-		case '>':
-			return author$project$BrainFuck$Tape$pointerInc;
-		case '<':
-			return author$project$BrainFuck$Tape$pointerDec;
-		default:
-			return author$project$BrainFuck$Tape$inc;
-	}
-};
-var elm$core$Basics$composeR = F3(
-	function (f, g, x) {
-		return g(
-			f(x));
-	});
-var elm$core$List$foldrHelper = F4(
-	function (fn, acc, ctr, ls) {
-		if (!ls.b) {
-			return acc;
-		} else {
-			var a = ls.a;
-			var r1 = ls.b;
-			if (!r1.b) {
-				return A2(fn, a, acc);
-			} else {
-				var b = r1.a;
-				var r2 = r1.b;
-				if (!r2.b) {
-					return A2(
-						fn,
-						a,
-						A2(fn, b, acc));
-				} else {
-					var c = r2.a;
-					var r3 = r2.b;
-					if (!r3.b) {
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(fn, c, acc)));
-					} else {
-						var d = r3.a;
-						var r4 = r3.b;
-						var res = (ctr > 500) ? A3(
-							elm$core$List$foldl,
-							fn,
-							acc,
-							elm$core$List$reverse(r4)) : A4(elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
-						return A2(
-							fn,
-							a,
-							A2(
-								fn,
-								b,
-								A2(
-									fn,
-									c,
-									A2(fn, d, res))));
-					}
-				}
-			}
-		}
-	});
-var elm$core$List$foldr = F3(
-	function (fn, acc, ls) {
-		return A4(elm$core$List$foldrHelper, fn, acc, 0, ls);
-	});
-var elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
-var elm$core$String$foldr = _String_foldr;
-var elm$core$String$toList = function (string) {
-	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
-};
-var author$project$BrainFuck$Parser$parse = function (_n0) {
-	var cs = _n0.a;
-	return A3(
-		elm$core$List$foldr,
-		elm$core$Basics$composeR,
-		author$project$BrainFuck$Tape$inc,
-		A2(
-			elm$core$List$map,
-			author$project$BrainFuck$Parser$charToCommand,
-			elm$core$String$toList(cs)));
-};
-var author$project$BrainFuck$Tape$run = F2(
-	function (f, tape) {
-		return f(tape);
-	});
 var author$project$BrainFuck$Tape$while = F2(
 	function (f, tape) {
 		_while:
@@ -5555,6 +5474,65 @@ var author$project$BrainFuck$Tape$while = F2(
 				continue _while;
 			}
 		}
+	});
+var elm$core$Basics$composeR = F3(
+	function (f, g, x) {
+		return g(
+			f(x));
+	});
+var author$project$BrainFuck$Parser$charsToCommand = function (cs) {
+	if (cs.b) {
+		var c = cs.a;
+		var cs_ = cs.b;
+		switch (c.valueOf()) {
+			case '+':
+				return A2(
+					elm$core$Basics$composeR,
+					author$project$BrainFuck$Tape$inc,
+					author$project$BrainFuck$Parser$charsToCommand(cs_));
+			case '-':
+				return A2(
+					elm$core$Basics$composeR,
+					author$project$BrainFuck$Tape$dec,
+					author$project$BrainFuck$Parser$charsToCommand(cs_));
+			case '>':
+				return A2(
+					elm$core$Basics$composeR,
+					author$project$BrainFuck$Tape$pointerInc,
+					author$project$BrainFuck$Parser$charsToCommand(cs_));
+			case '<':
+				return A2(
+					elm$core$Basics$composeR,
+					author$project$BrainFuck$Tape$pointerDec,
+					author$project$BrainFuck$Parser$charsToCommand(cs_));
+			case '[':
+				return A2(
+					elm$core$Basics$composeR,
+					author$project$BrainFuck$Tape$while(
+						author$project$BrainFuck$Parser$charsToCommand(cs_)),
+					author$project$BrainFuck$Parser$charsToCommand(
+						author$project$BrainFuck$Parser$dropWhileEnd(cs_)));
+			case ']':
+				return author$project$BrainFuck$Tape$none;
+			default:
+				return author$project$BrainFuck$Tape$none;
+		}
+	} else {
+		return author$project$BrainFuck$Tape$none;
+	}
+};
+var elm$core$String$foldr = _String_foldr;
+var elm$core$String$toList = function (string) {
+	return A3(elm$core$String$foldr, elm$core$List$cons, _List_Nil, string);
+};
+var author$project$BrainFuck$Parser$parse = function (_n0) {
+	var cs = _n0.a;
+	return author$project$BrainFuck$Parser$charsToCommand(
+		elm$core$String$toList(cs));
+};
+var author$project$BrainFuck$Tape$run = F2(
+	function (f, tape) {
+		return f(tape);
 	});
 var author$project$Main$update = F2(
 	function (msg, model) {
@@ -5818,6 +5796,61 @@ var elm$html$Html$Events$stopPropagationOn = F2(
 			event,
 			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
+var elm$core$List$foldrHelper = F4(
+	function (fn, acc, ctr, ls) {
+		if (!ls.b) {
+			return acc;
+		} else {
+			var a = ls.a;
+			var r1 = ls.b;
+			if (!r1.b) {
+				return A2(fn, a, acc);
+			} else {
+				var b = r1.a;
+				var r2 = r1.b;
+				if (!r2.b) {
+					return A2(
+						fn,
+						a,
+						A2(fn, b, acc));
+				} else {
+					var c = r2.a;
+					var r3 = r2.b;
+					if (!r3.b) {
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(fn, c, acc)));
+					} else {
+						var d = r3.a;
+						var r4 = r3.b;
+						var res = (ctr > 500) ? A3(
+							elm$core$List$foldl,
+							fn,
+							acc,
+							elm$core$List$reverse(r4)) : A4(elm$core$List$foldrHelper, fn, acc, ctr + 1, r4);
+						return A2(
+							fn,
+							a,
+							A2(
+								fn,
+								b,
+								A2(
+									fn,
+									c,
+									A2(fn, d, res))));
+					}
+				}
+			}
+		}
+	});
+var elm$core$List$foldr = F3(
+	function (fn, acc, ls) {
+		return A4(elm$core$List$foldrHelper, fn, acc, 0, ls);
+	});
 var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$at = F2(
 	function (fields, decoder) {
@@ -6003,6 +6036,20 @@ var elm$core$Task$Perform = function (a) {
 };
 var elm$core$Task$succeed = _Scheduler_succeed;
 var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
+var elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
 var elm$core$Task$andThen = _Scheduler_andThen;
 var elm$core$Task$map = F2(
 	function (func, taskA) {

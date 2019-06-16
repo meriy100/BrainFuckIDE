@@ -100,6 +100,9 @@ while f (Tape _ value _ as tape) =
       tape
     else
         while f (f tape)
+none : Command Int
+none tape =
+    tape
 
 run : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
 run f tape =
