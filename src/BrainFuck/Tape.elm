@@ -14,6 +14,9 @@ type Left a =
 type Tape a =
     Tape (Left a) a (Right a)
 
+type alias Command a =
+    (Tape a -> Tape a)
+
 init : Tape Int
 init =
     Tape UnUsedLeft 0 UnUsedRight
@@ -59,21 +62,21 @@ rightToList right =
         UnUsedRight ->
             []
 
-inc : Tape Int -> Tape Int
+inc : Command Int
 inc (Tape left value right) =
     if value == 255 then
         Tape left (0) right
     else
         Tape left (value + 1) right
 
-dec : Tape Int -> Tape Int
+dec : Command Int
 dec (Tape left value right) =
     if value == 0 then
        Tape left (255) right
     else
        Tape left (value - 1) right
 
-pointerInc : Tape Int -> Tape Int
+pointerInc : Command Int
 pointerInc (Tape left value right) =
     case right of
        Right v r ->
@@ -82,7 +85,7 @@ pointerInc (Tape left value right) =
            Tape (Left left value) 0 UnUsedRight
 
 
-pointerDec : Tape Int -> Tape Int
+pointerDec : Command Int
 pointerDec (Tape left value right) =
     case left of
        Left l v ->
@@ -90,10 +93,14 @@ pointerDec (Tape left value right) =
        UnUsedLeft ->
            Tape UnUsedLeft 0 (Right value right)
 
-while : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
+--while : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
+while : Command Int -> Command Int
 while f (Tape _ value _ as tape) =
     if value == 0 then
       tape
     else
         while f (f tape)
 
+run : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
+run f tape =
+    f tape
