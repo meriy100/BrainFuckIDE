@@ -4883,6 +4883,7 @@ var author$project$BrainFuck$Tape$init = A3(author$project$BrainFuck$Tape$Tape, 
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
+var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -5146,7 +5147,6 @@ var elm$core$Array$initialize = F2(
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
-var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5364,7 +5364,10 @@ var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
 		{
 			code: author$project$BrainFuck$Parser$Code('+++[->+>+<<]'),
-			tape: author$project$BrainFuck$Tape$init
+			input: '',
+			tape: author$project$BrainFuck$Tape$init,
+			waitings: elm$core$Maybe$Nothing,
+			whileStack: _List_Nil
 		},
 		elm$core$Platform$Cmd$none);
 };
@@ -5459,6 +5462,17 @@ var author$project$BrainFuck$Tape$pointerInc = function (_n0) {
 			author$project$BrainFuck$Tape$UnUsedRight);
 	}
 };
+var elm$core$Debug$log = _Debug_log;
+var author$project$BrainFuck$Tape$put = function (_n0) {
+	var left = _n0.a;
+	var value = _n0.b;
+	var right = _n0.c;
+	return A3(
+		author$project$BrainFuck$Tape$Tape,
+		left,
+		A2(elm$core$Debug$log, 'number', value),
+		right);
+};
 var author$project$BrainFuck$Tape$while = F2(
 	function (f, tape) {
 		_while:
@@ -5505,6 +5519,11 @@ var author$project$BrainFuck$Parser$charsToCommand = function (cs) {
 					elm$core$Basics$composeR,
 					author$project$BrainFuck$Tape$pointerDec,
 					author$project$BrainFuck$Parser$charsToCommand(cs_));
+			case '.':
+				return A2(
+					elm$core$Basics$composeR,
+					author$project$BrainFuck$Tape$put,
+					author$project$BrainFuck$Parser$charsToCommand(cs_));
 			case '[':
 				return A2(
 					elm$core$Basics$composeR,
@@ -5530,9 +5549,87 @@ var author$project$BrainFuck$Parser$parse = function (_n0) {
 	return author$project$BrainFuck$Parser$charsToCommand(
 		elm$core$String$toList(cs));
 };
+var author$project$BrainFuck$Parser$whileRange = F2(
+	function (x, cs) {
+		if (cs.b) {
+			var c = cs.a;
+			var cs_ = cs.b;
+			switch (c.valueOf()) {
+				case '[':
+					return A2(
+						elm$core$List$cons,
+						c,
+						A2(author$project$BrainFuck$Parser$whileRange, x + 1, cs_));
+				case ']':
+					return (!x) ? _List_fromArray(
+						[c]) : A2(
+						elm$core$List$cons,
+						c,
+						A2(author$project$BrainFuck$Parser$whileRange, x - 1, cs_));
+				default:
+					return A2(
+						elm$core$List$cons,
+						c,
+						A2(author$project$BrainFuck$Parser$whileRange, x, cs_));
+			}
+		} else {
+			return _List_Nil;
+		}
+	});
+var author$project$BrainFuck$Tape$isZero = function (_n0) {
+	var value = _n0.b;
+	return !value;
+};
 var author$project$BrainFuck$Tape$run = F2(
 	function (f, tape) {
 		return f(tape);
+	});
+var author$project$Main$codeToString = function (_n0) {
+	var str = _n0.a;
+	return str;
+};
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$List$tail = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(xs);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var author$project$Main$pushWhileStack = F2(
+	function (whileStack, c) {
+		return A2(
+			elm$core$List$cons,
+			_Utils_ap(
+				A2(
+					elm$core$Maybe$withDefault,
+					_List_Nil,
+					elm$core$List$head(whileStack)),
+				_List_fromArray(
+					[c])),
+			A2(
+				elm$core$Maybe$withDefault,
+				_List_Nil,
+				elm$core$List$tail(whileStack)));
 	});
 var author$project$Main$update = F2(
 	function (msg, model) {
@@ -5546,7 +5643,138 @@ var author$project$Main$update = F2(
 							code: author$project$BrainFuck$Parser$Code(str)
 						}),
 					elm$core$Platform$Cmd$none);
-			case 'Run':
+			case 'ChangeInput':
+				var str = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{input: str}),
+					elm$core$Platform$Cmd$none);
+			case 'Next':
+				var _n1 = model.waitings;
+				if (_n1.$ === 'Nothing') {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								waitings: elm$core$Maybe$Just(
+									elm$core$String$toList(
+										author$project$Main$codeToString(model.code)))
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					var cs = _n1.a;
+					if (cs.b) {
+						var c = cs.a;
+						var cs_ = cs.b;
+						switch (c.valueOf()) {
+							case '+':
+								return _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											tape: author$project$BrainFuck$Tape$inc(model.tape),
+											waitings: elm$core$Maybe$Just(cs_),
+											whileStack: A2(author$project$Main$pushWhileStack, model.whileStack, c)
+										}),
+									elm$core$Platform$Cmd$none);
+							case '-':
+								return _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											tape: author$project$BrainFuck$Tape$dec(model.tape),
+											waitings: elm$core$Maybe$Just(cs_),
+											whileStack: A2(author$project$Main$pushWhileStack, model.whileStack, c)
+										}),
+									elm$core$Platform$Cmd$none);
+							case '>':
+								return _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											tape: author$project$BrainFuck$Tape$pointerInc(model.tape),
+											waitings: elm$core$Maybe$Just(cs_),
+											whileStack: A2(author$project$Main$pushWhileStack, model.whileStack, c)
+										}),
+									elm$core$Platform$Cmd$none);
+							case '<':
+								return _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											tape: author$project$BrainFuck$Tape$pointerDec(model.tape),
+											waitings: elm$core$Maybe$Just(cs_),
+											whileStack: A2(author$project$Main$pushWhileStack, model.whileStack, c)
+										}),
+									elm$core$Platform$Cmd$none);
+							case '.':
+								return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+							case '[':
+								return author$project$BrainFuck$Tape$isZero(model.tape) ? _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											waitings: elm$core$Maybe$Just(
+												author$project$BrainFuck$Parser$dropWhileEnd(cs_)),
+											whileStack: A2(
+												elm$core$List$cons,
+												_Utils_ap(
+													A2(
+														elm$core$Maybe$withDefault,
+														_List_Nil,
+														elm$core$List$head(model.whileStack)),
+													_Utils_ap(
+														_List_fromArray(
+															[c]),
+														A2(author$project$BrainFuck$Parser$whileRange, 0, cs_))),
+												A2(
+													elm$core$Maybe$withDefault,
+													_List_Nil,
+													elm$core$List$tail(
+														A2(
+															elm$core$Maybe$withDefault,
+															_List_Nil,
+															elm$core$List$tail(model.whileStack)))))
+										}),
+									elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											waitings: elm$core$Maybe$Just(cs_),
+											whileStack: A2(
+												elm$core$List$cons,
+												_List_fromArray(
+													[c]),
+												model.whileStack)
+										}),
+									elm$core$Platform$Cmd$none);
+							case ']':
+								return _Utils_Tuple2(
+									_Utils_update(
+										model,
+										{
+											waitings: elm$core$Maybe$Just(
+												_Utils_ap(
+													A2(
+														elm$core$Maybe$withDefault,
+														_List_Nil,
+														elm$core$List$head(model.whileStack)),
+													cs)),
+											whileStack: A2(
+												elm$core$Maybe$withDefault,
+												_List_Nil,
+												elm$core$List$tail(model.whileStack))
+										}),
+									elm$core$Platform$Cmd$none);
+							default:
+								return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+						}
+					} else {
+						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					}
+				}
+			default:
 				var f = author$project$BrainFuck$Parser$parse(model.code);
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -5555,70 +5783,18 @@ var author$project$Main$update = F2(
 							tape: A2(author$project$BrainFuck$Tape$run, f, model.tape)
 						}),
 					elm$core$Platform$Cmd$none);
-			case 'Inc':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							tape: author$project$BrainFuck$Tape$inc(model.tape)
-						}),
-					elm$core$Platform$Cmd$none);
-			case 'Dec':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							tape: author$project$BrainFuck$Tape$dec(model.tape)
-						}),
-					elm$core$Platform$Cmd$none);
-			case 'PointerInc':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							tape: author$project$BrainFuck$Tape$pointerInc(model.tape)
-						}),
-					elm$core$Platform$Cmd$none);
-			case 'PointerDec':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							tape: author$project$BrainFuck$Tape$pointerDec(model.tape)
-						}),
-					elm$core$Platform$Cmd$none);
-			default:
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							tape: A2(
-								author$project$BrainFuck$Tape$while,
-								A2(
-									elm$core$Basics$composeR,
-									author$project$BrainFuck$Tape$dec,
-									A2(
-										elm$core$Basics$composeR,
-										author$project$BrainFuck$Tape$pointerInc,
-										A2(elm$core$Basics$composeR, author$project$BrainFuck$Tape$inc, author$project$BrainFuck$Tape$pointerDec))),
-								model.tape)
-						}),
-					elm$core$Platform$Cmd$none);
 		}
 	});
 var author$project$Main$ChangeCode = function (a) {
 	return {$: 'ChangeCode', a: a};
 };
-var author$project$Main$Dec = {$: 'Dec'};
-var author$project$Main$Inc = {$: 'Inc'};
-var author$project$Main$PointerDec = {$: 'PointerDec'};
-var author$project$Main$PointerInc = {$: 'PointerInc'};
-var author$project$Main$Run = {$: 'Run'};
-var author$project$Main$TestWhile = {$: 'TestWhile'};
-var author$project$Main$codeToString = function (_n0) {
-	var str = _n0.a;
-	return str;
+var author$project$Main$ChangeInput = function (a) {
+	return {$: 'ChangeInput', a: a};
 };
+var author$project$Main$Next = function (a) {
+	return {$: 'Next', a: a};
+};
+var author$project$Main$Run = {$: 'Run'};
 var author$project$BrainFuck$Tape$leftMap = F2(
 	function (f, left) {
 		if (left.$ === 'Left') {
@@ -5750,52 +5926,6 @@ var author$project$Main$tdListView = function (tape) {
 				elm$core$String$fromInt),
 			tape));
 };
-var elm$html$Html$button = _VirtualDom_node('button');
-var elm$html$Html$div = _VirtualDom_node('div');
-var elm$html$Html$h1 = _VirtualDom_node('h1');
-var elm$html$Html$table = _VirtualDom_node('table');
-var elm$html$Html$textarea = _VirtualDom_node('textarea');
-var elm$html$Html$tr = _VirtualDom_node('tr');
-var elm$json$Json$Encode$string = _Json_wrap;
-var elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$string(string));
-	});
-var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
-var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
-};
-var elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
 var elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
 		if (!ls.b) {
@@ -5850,6 +5980,71 @@ var elm$core$List$foldrHelper = F4(
 var elm$core$List$foldr = F3(
 	function (fn, acc, ls) {
 		return A4(elm$core$List$foldrHelper, fn, acc, 0, ls);
+	});
+var elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
+var elm$core$String$cons = _String_cons;
+var elm$core$String$fromChar = function (_char) {
+	return A2(elm$core$String$cons, _char, '');
+};
+var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var elm$html$Html$p = _VirtualDom_node('p');
+var elm$html$Html$table = _VirtualDom_node('table');
+var elm$html$Html$textarea = _VirtualDom_node('textarea');
+var elm$html$Html$tr = _VirtualDom_node('tr');
+var elm$json$Json$Encode$string = _Json_wrap;
+var elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$string(string));
+	});
+var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
 	});
 var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$at = F2(
@@ -5917,6 +6112,17 @@ var author$project$Main$view = function (model) {
 										_List_fromArray(
 											[
 												elm$html$Html$text('Run')
+											])),
+										A2(
+										elm$html$Html$button,
+										_List_fromArray(
+											[
+												elm$html$Html$Events$onClick(
+												author$project$Main$Next(1))
+											]),
+										_List_fromArray(
+											[
+												elm$html$Html$text('Next')
 											]))
 									])),
 								A2(
@@ -5933,7 +6139,61 @@ var author$project$Main$view = function (model) {
 												author$project$Main$codeToString(model.code))
 											]),
 										_List_Nil)
-									]))
+									])),
+								A2(
+								elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										elm$html$Html$textarea,
+										_List_fromArray(
+											[
+												elm$html$Html$Events$onInput(author$project$Main$ChangeInput),
+												elm$html$Html$Attributes$value(model.input)
+											]),
+										_List_Nil)
+									])),
+								A2(
+								elm$html$Html$div,
+								_List_Nil,
+								_List_fromArray(
+									[
+										A2(
+										elm$html$Html$p,
+										_List_fromArray(
+											[
+												A2(elm$html$Html$Attributes$style, 'color', 'red')
+											]),
+										elm$core$List$singleton(
+											elm$html$Html$text(
+												A2(
+													elm$core$String$join,
+													'',
+													A2(
+														elm$core$List$map,
+														elm$core$String$fromChar,
+														A2(elm$core$Maybe$withDefault, _List_Nil, model.waitings))))))
+									])),
+								A2(
+								elm$html$Html$div,
+								_List_Nil,
+								A2(
+									elm$core$List$map,
+									A2(
+										elm$core$Basics$composeL,
+										A2(
+											elm$core$Basics$composeL,
+											A2(
+												elm$core$Basics$composeL,
+												A2(
+													elm$core$Basics$composeL,
+													elm$html$Html$p(_List_Nil),
+													elm$core$List$singleton),
+												elm$html$Html$text),
+											elm$core$String$join('')),
+										elm$core$List$map(elm$core$String$fromChar)),
+									model.whileStack))
 							])),
 						A2(
 						elm$html$Html$div,
@@ -5943,62 +6203,6 @@ var author$project$Main$view = function (model) {
 							]),
 						_List_fromArray(
 							[
-								A2(
-								elm$html$Html$div,
-								_List_Nil,
-								_List_fromArray(
-									[
-										A2(
-										elm$html$Html$button,
-										_List_fromArray(
-											[
-												elm$html$Html$Events$onClick(author$project$Main$Inc)
-											]),
-										_List_fromArray(
-											[
-												elm$html$Html$text('+')
-											])),
-										A2(
-										elm$html$Html$button,
-										_List_fromArray(
-											[
-												elm$html$Html$Events$onClick(author$project$Main$Dec)
-											]),
-										_List_fromArray(
-											[
-												elm$html$Html$text('-')
-											])),
-										A2(
-										elm$html$Html$button,
-										_List_fromArray(
-											[
-												elm$html$Html$Events$onClick(author$project$Main$PointerDec)
-											]),
-										_List_fromArray(
-											[
-												elm$html$Html$text('<')
-											])),
-										A2(
-										elm$html$Html$button,
-										_List_fromArray(
-											[
-												elm$html$Html$Events$onClick(author$project$Main$PointerInc)
-											]),
-										_List_fromArray(
-											[
-												elm$html$Html$text('>')
-											])),
-										A2(
-										elm$html$Html$button,
-										_List_fromArray(
-											[
-												elm$html$Html$Events$onClick(author$project$Main$TestWhile)
-											]),
-										_List_fromArray(
-											[
-												elm$html$Html$text('[->+<]')
-											]))
-									])),
 								A2(
 								elm$html$Html$table,
 								_List_Nil,
@@ -6036,20 +6240,6 @@ var elm$core$Task$Perform = function (a) {
 };
 var elm$core$Task$succeed = _Scheduler_succeed;
 var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
-var elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
 var elm$core$Task$andThen = _Scheduler_andThen;
 var elm$core$Task$map = F2(
 	function (func, taskA) {
@@ -6254,7 +6444,6 @@ var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 			]));
 };
 var elm$html$Html$a = _VirtualDom_node('a');
-var elm$html$Html$p = _VirtualDom_node('p');
 var elm$html$Html$ul = _VirtualDom_node('ul');
 var elm$html$Html$Attributes$href = function (url) {
 	return A2(
@@ -6934,15 +7123,6 @@ var elm$core$Dict$isEmpty = function (dict) {
 		return false;
 	}
 };
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var elm$browser$Debugger$Expando$viewExtraTiny = function (value) {
 	if (value.$ === 'Record') {
 		var record = value.b;
@@ -10184,4 +10364,4 @@ var elm$browser$Browser$element = _Browser_element;
 var author$project$Main$main = elm$browser$Browser$element(
 	{init: author$project$Main$init, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"ChangeCode":["String.String"],"Run":[],"Inc":[],"Dec":[],"PointerInc":[],"PointerDec":[],"TestWhile":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"ChangeCode":["String.String"],"ChangeInput":["String.String"],"Run":[],"Next":["Basics.Int"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
