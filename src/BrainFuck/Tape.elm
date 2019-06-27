@@ -1,5 +1,6 @@
 module BrainFuck.Tape exposing (Command, Left(..), Right(..), Tape(..), UnLink(..), currentOrMap, dec, inc, init, isZero, leftMap, leftToList, none, pointerDec, pointerInc, put, rightMap, rightToList, run, toList, while)
 
+import BrainFuck.Value as Value
 import Debug as Debug
 
 
