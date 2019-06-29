@@ -13,7 +13,7 @@ import Task as Task
 
 
 type alias Model =
-    { code : Parser.Code
+    { code : Parser.Code Parser.UnNormalized
     , input : String
     , bfcore : Core.Model
     }
@@ -24,10 +24,6 @@ type Msg
     | ChangeInput String
     | Run
     | Next
-
-
-codeToString (Parser.Code str) =
-    str
 
 
 main =
@@ -41,7 +37,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { code = Parser.Code "+++[->+>+<<]"
+    ( { code = Parser.cons "+++[->+>+<<]"
       , input = ""
       , bfcore = Core.init
       }
@@ -69,7 +65,7 @@ view model =
                     , Html.button [ Events.onClick Next ] [ Html.text "Next" ]
                     ]
                 , Html.div []
-                    [ Html.textarea [ Events.onInput ChangeCode, model.code |> codeToString |> Attributes.value ] []
+                    [ Html.textarea [ Events.onInput ChangeCode, model.code |> Parser.toString |> Attributes.value ] []
                     ]
                 , Html.div []
                     [ Html.textarea [ Events.onInput ChangeInput, model.input |> Attributes.value ] []
@@ -111,7 +107,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ChangeCode str ->
-            CEx.pure { model | code = Parser.Code str }
+            CEx.pure { model | code = Parser.cons str }
 
         ChangeInput str ->
             CEx.pure { model | input = str }
@@ -136,7 +132,7 @@ update msg model =
                         bfcore =
                             model.bfcore
                     in
-                    CEx.withTrigger Next { model | bfcore = { bfcore | waitings = model.code |> codeToString |> String.toList |> Just, inputBuffer = model.input |> String.toList |> Core.InputBuffer } }
+                    CEx.withTrigger Next { model | bfcore = { bfcore | waitings = model.code |> Parser.toString |> String.toList |> Just, inputBuffer = model.input |> String.toList |> Core.InputBuffer } }
 
                 Just cs ->
                     CEx.pure model

@@ -1,8 +1,73 @@
-module BrainFuck.Parser exposing (Code(..), dropWhileEnd, whileRange)
+module BrainFuck.Parser exposing (Code, UnNormalized, cons, dropWhileEnd, toString, whileRange)
 
 
-type Code
-    = Code String
+type Normalized
+    = Normalized
+
+
+type UnNormalized
+    = UnNormalized
+
+
+type Code a
+    = Code a String
+
+
+type Token
+    = Increment
+    | Decrement
+    | PointerInc
+    | PointerDec
+    | Get
+    | Put
+    | While
+    | End
+
+
+cons : String -> Code UnNormalized
+cons str =
+    Code UnNormalized str
+
+
+toString (Code _ str) =
+    str
+
+
+
+--
+--normalize : Code UnNormalized -> Code Normalized
+--normalize (Code _ str) =
+
+
+toTokens : Code Normalized -> List Token
+toTokens (Code _ s) =
+    case '-' of
+        '+' ->
+            []
+
+        '-' ->
+            []
+
+        '>' ->
+            []
+
+        '<' ->
+            []
+
+        ',' ->
+            []
+
+        '.' ->
+            []
+
+        '[' ->
+            []
+
+        ']' ->
+            []
+
+        _ ->
+            []
 
 
 dropWhileEnd cs =
