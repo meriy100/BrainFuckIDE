@@ -1,4 +1,4 @@
-module BrainFuck.Tape exposing (Command, Left(..), Right(..), Tape(..), UnLink(..), currentOrMap, dec, inc, init, isZero, leftMap, leftToList, none, pointerDec, pointerInc, put, rightMap, rightToList, run, toList, while)
+module BrainFuck.Tape exposing (Command, Left(..), Right(..), Tape(..), UnLink(..), currentOrMap, dec, get, inc, init, isZero, leftMap, leftToList, none, pointerDec, pointerInc, putValue, rightMap, rightToList, run, toList, while)
 
 import BrainFuck.Value as Value
 import Debug as Debug
@@ -121,15 +121,14 @@ pointerDec (Tape left value right) =
             Tape UnUsedLeft 0 (Right value right)
 
 
+get : Char -> Command Int
+get c (Tape left _ right) =
+    Tape left (c |> Char.toCode) right
 
---get : Command Int
---get (Tape left value right) =
---    Tape left (Debug "") right
 
-
-put : Command Int
-put (Tape left value right) =
-    Tape left (Debug.log "number" value) right
+putValue : Tape Int -> Int
+putValue (Tape _ value _) =
+    value
 
 
 

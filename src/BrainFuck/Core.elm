@@ -1,4 +1,4 @@
-module BrainFuck.Core exposing (Model, init, update)
+module BrainFuck.Core exposing (InputBuffer(..), Model, init, update)
 
 import BrainFuck.Parser as Parser
 import BrainFuck.Tape as Tape exposing (Tape)
@@ -9,18 +9,23 @@ type alias Model =
     { tape : Tape Int
     , waitings : Maybe (List Char)
     , whileStack : List (List Char)
+    , inputBuffer : InputBuffer
+    , outputBuffer : List Int
     }
+
+
+type InputBuffer
+    = Waiting
+    | InputBuffer (List Char)
 
 
 init =
     { tape = Tape.init
     , waitings = Nothing
     , whileStack = []
+    , inputBuffer = Waiting
+    , outputBuffer = []
     }
-
-
-codeToString (Parser.Code str) =
-    str
 
 
 pushWhileStack whileStack c =
@@ -60,8 +65,30 @@ update model cs =
                         , whileStack = pushWhileStack model.whileStack c
                     }
 
+                ',' ->
+                    case model.inputBuffer of
+                        Waiting ->
+                            model
+
+                        InputBuffer [] ->
+                            { model
+                                | inputBuffer = Waiting
+                            }
+
+                        InputBuffer (i :: is) ->
+                            { model
+                                | tape = Tape.get i model.tape
+                                , waitings = Just cs_
+                                , whileStack = pushWhileStack model.whileStack c
+                                , inputBuffer = InputBuffer is
+                            }
+
                 '.' ->
-                    model
+                    { model
+                        | waitings = Just cs_
+                        , whileStack = pushWhileStack model.whileStack c
+                        , outputBuffer = model.outputBuffer ++ [ Tape.putValue model.tape ]
+                    }
 
                 '[' ->
                     if model.tape |> Tape.isZero then
@@ -83,7 +110,15 @@ update model cs =
                     }
 
                 _ ->
-                    model
+                    { model
+                        | waitings = Nothing
+                        , whileStack = []
+                        , inputBuffer = Waiting
+                    }
 
         [] ->
-            model
+            { model
+                | waitings = Nothing
+                , whileStack = []
+                , inputBuffer = Waiting
+            }

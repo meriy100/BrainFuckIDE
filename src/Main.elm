@@ -4,6 +4,7 @@ import BrainFuck.Core as Core
 import BrainFuck.Parser as Parser
 import BrainFuck.Tape as Tape exposing (Tape)
 import Browser as Browser
+import Cmd.Extra as CEx
 import Html as Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
@@ -21,7 +22,8 @@ type Msg
     = ChangeCode String
     | ChangeInput String
     | Run
-    | Next Int
+    | Start
+    | Next
 
 
 codeToString (Parser.Code str) =
@@ -64,7 +66,8 @@ view model =
             [ Html.div [ Attributes.class "six columns" ]
                 [ Html.div []
                     [ Html.button [ Events.onClick Run ] [ Html.text "Run" ]
-                    , Html.button [ Events.onClick (Next 1) ] [ Html.text "Next" ]
+                    , Html.button [ Events.onClick Start ] [ Html.text "Start" ]
+                    , Html.button [ Events.onClick Next ] [ Html.text "Next" ]
                     ]
                 , Html.div []
                     [ Html.textarea [ Events.onInput ChangeCode, model.code |> codeToString |> Attributes.value ] []
@@ -94,33 +97,50 @@ view model =
                     ]
                 ]
             ]
+        , Html.div [ Attributes.class "six columns" ]
+            [ Html.p []
+                [ model.bfcore.outputBuffer
+                    |> List.map Char.fromCode
+                    |> String.fromList
+                    |> Html.text
+                ]
+            ]
         ]
-
-
-pushWhileStack whileStack c =
-    ((whileStack |> List.head |> Maybe.withDefault []) ++ [ c ]) :: (whileStack |> List.tail |> Maybe.withDefault [])
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ChangeCode str ->
-            ( { model | code = Parser.Code str }, Cmd.none )
+            CEx.pure { model | code = Parser.Code str }
 
         ChangeInput str ->
-            ( { model | input = str }, Cmd.none )
+            CEx.pure { model | input = str }
 
-        Next _ ->
+        Start ->
             case model.bfcore.waitings of
                 Nothing ->
                     let
                         bfcore =
                             model.bfcore
                     in
-                    ( { model | bfcore = { bfcore | waitings = model.code |> codeToString |> String.toList |> Just } }, Cmd.none )
+                    CEx.withTrigger Next { model | bfcore = { bfcore | waitings = model.code |> codeToString |> String.toList |> Just, inputBuffer = model.input |> String.toList |> Core.InputBuffer } }
 
                 Just cs ->
-                    ( { model | bfcore = Core.update model.bfcore cs }, Cmd.none )
+                    CEx.pure model
+
+        Next ->
+            case model.bfcore.waitings of
+                Nothing ->
+                    CEx.pure model
+
+                Just cs ->
+                    case model.bfcore.inputBuffer of
+                        Core.Waiting ->
+                            CEx.pure model
+
+                        _ ->
+                            CEx.withTrigger Next { model | bfcore = Core.update model.bfcore cs }
 
         Run ->
             let
@@ -130,7 +150,7 @@ update msg model =
                 bfcore =
                     model.bfcore
             in
-            ( { model | bfcore = { bfcore | tape = Tape.run f model.bfcore.tape } }, Cmd.none )
+            CEx.pure { model | bfcore = { bfcore | tape = Tape.run f model.bfcore.tape } }
 
 
 subscriptions : Model -> Sub Msg

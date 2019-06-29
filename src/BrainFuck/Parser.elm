@@ -30,9 +30,8 @@ charsToCommand cs =
                 '<' ->
                     Tape.pointerDec >> charsToCommand cs_
 
-                '.' ->
-                    Tape.put >> charsToCommand cs_
-
+                --                '.' ->
+                --                    Tape.put >> charsToCommand cs_
                 '[' ->
                     Tape.while (charsToCommand cs_) >> charsToCommand (dropWhileEnd cs_)
 
