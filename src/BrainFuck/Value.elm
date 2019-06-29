@@ -1,4 +1,4 @@
-module BrainFuck.Value exposing (Value, decrement, fromInt, increment, toInt)
+module BrainFuck.Value exposing (Value, decrement, fromInt, increment, toInt, zero)
 
 
 type Value
@@ -258,6 +258,10 @@ type Value
     | Value253
     | Value254
     | Value255
+
+
+zero =
+    Value0
 
 
 increment : Value -> Value

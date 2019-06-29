@@ -3,6 +3,7 @@ module Main exposing (Model, Msg(..), init, main, subscriptions, tdListView, upd
 import BrainFuck.Core as Core
 import BrainFuck.Parser as Parser
 import BrainFuck.Tape as Tape exposing (Tape)
+import BrainFuck.Value as Value
 import Browser as Browser
 import Cmd.Extra as CEx
 import Html as Html exposing (Html)
@@ -22,7 +23,6 @@ type Msg
     = ChangeCode String
     | ChangeInput String
     | Run
-    | Start
     | Next
 
 
@@ -49,11 +49,11 @@ init _ =
     )
 
 
-tdListView : Tape Int -> List (Html Msg)
+tdListView : Tape Value.Value -> List (Html Msg)
 tdListView tape =
     Tape.currentOrMap
-        (Html.td [ Attributes.style "color" "red" ] << List.singleton << Html.text << String.fromInt)
-        (Html.td [] << List.singleton << Html.text << String.fromInt)
+        (Html.td [ Attributes.style "color" "red" ] << List.singleton << Html.text << String.fromInt << Value.toInt)
+        (Html.td [] << List.singleton << Html.text << String.fromInt << Value.toInt)
         tape
         |> Tape.toList
 
@@ -66,7 +66,6 @@ view model =
             [ Html.div [ Attributes.class "six columns" ]
                 [ Html.div []
                     [ Html.button [ Events.onClick Run ] [ Html.text "Run" ]
-                    , Html.button [ Events.onClick Start ] [ Html.text "Start" ]
                     , Html.button [ Events.onClick Next ] [ Html.text "Next" ]
                     ]
                 , Html.div []
@@ -117,18 +116,6 @@ update msg model =
         ChangeInput str ->
             CEx.pure { model | input = str }
 
-        Start ->
-            case model.bfcore.waitings of
-                Nothing ->
-                    let
-                        bfcore =
-                            model.bfcore
-                    in
-                    CEx.withTrigger Next { model | bfcore = { bfcore | waitings = model.code |> codeToString |> String.toList |> Just, inputBuffer = model.input |> String.toList |> Core.InputBuffer } }
-
-                Just cs ->
-                    CEx.pure model
-
         Next ->
             case model.bfcore.waitings of
                 Nothing ->
@@ -143,14 +130,16 @@ update msg model =
                             CEx.withTrigger Next { model | bfcore = Core.update model.bfcore cs }
 
         Run ->
-            let
-                f =
-                    Parser.parse model.code
+            case model.bfcore.waitings of
+                Nothing ->
+                    let
+                        bfcore =
+                            model.bfcore
+                    in
+                    CEx.withTrigger Next { model | bfcore = { bfcore | waitings = model.code |> codeToString |> String.toList |> Just, inputBuffer = model.input |> String.toList |> Core.InputBuffer } }
 
-                bfcore =
-                    model.bfcore
-            in
-            CEx.pure { model | bfcore = { bfcore | tape = Tape.run f model.bfcore.tape } }
+                Just cs ->
+                    CEx.pure model
 
 
 subscriptions : Model -> Sub Msg

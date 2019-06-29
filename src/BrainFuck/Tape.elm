@@ -1,11 +1,7 @@
-module BrainFuck.Tape exposing (Command, Left(..), Right(..), Tape(..), UnLink(..), currentOrMap, dec, get, inc, init, isZero, leftMap, leftToList, none, pointerDec, pointerInc, putValue, rightMap, rightToList, run, toList, while)
+module BrainFuck.Tape exposing (Command, Tape, currentOrMap, dec, get, inc, init, isZero, leftMap, leftToList, none, pointerDec, pointerInc, putValue, rightMap, rightToList, toList, while)
 
 import BrainFuck.Value as Value
 import Debug as Debug
-
-
-type UnLink
-    = UnLink
 
 
 type Right a
@@ -26,9 +22,9 @@ type alias Command a =
     Tape a -> Tape a
 
 
-init : Tape Int
+init : Tape Value.Value
 init =
-    Tape UnUsedLeft 0 UnUsedRight
+    Tape UnUsedLeft Value.zero UnUsedRight
 
 
 currentOrMap : (a -> b) -> (a -> b) -> Tape a -> Tape b
@@ -83,77 +79,64 @@ rightToList right =
             []
 
 
-inc : Command Int
+inc : Command Value.Value
 inc (Tape left value right) =
-    if value == 255 then
-        Tape left 0 right
-
-    else
-        Tape left (value + 1) right
+    Tape left (Value.increment value) right
 
 
-dec : Command Int
+dec : Command Value.Value
 dec (Tape left value right) =
-    if value == 0 then
-        Tape left 255 right
-
-    else
-        Tape left (value - 1) right
+    Tape left (Value.decrement value) right
 
 
-pointerInc : Command Int
+pointerInc : Command Value.Value
 pointerInc (Tape left value right) =
     case right of
         Right v r ->
             Tape (Left left value) v r
 
         UnUsedRight ->
-            Tape (Left left value) 0 UnUsedRight
+            Tape (Left left value) Value.zero UnUsedRight
 
 
-pointerDec : Command Int
+pointerDec : Command Value.Value
 pointerDec (Tape left value right) =
     case left of
         Left l v ->
             Tape l v (Right value right)
 
         UnUsedLeft ->
-            Tape UnUsedLeft 0 (Right value right)
+            Tape UnUsedLeft Value.zero (Right value right)
 
 
-get : Char -> Command Int
+get : Char -> Command Value.Value
 get c (Tape left _ right) =
-    Tape left (c |> Char.toCode) right
+    Tape left (c |> Char.toCode |> Value.fromInt |> Maybe.withDefault Value.zero) right
 
 
-putValue : Tape Int -> Int
+putValue : Tape Value.Value -> Value.Value
 putValue (Tape _ value _) =
     value
 
 
 
---while : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
+--while : (Tape Value.Value -> Tape Value.Value) -> Tape Value.Value -> Tape Value.Value
 
 
-while : Command Int -> Command Int
+while : Command Value.Value -> Command Value.Value
 while f ((Tape _ value _) as tape) =
-    if value == 0 then
+    if tape |> isZero then
         tape
 
     else
         while f (f tape)
 
 
-none : Command Int
+none : Command Value.Value
 none tape =
     tape
 
 
-isZero : Tape Int -> Bool
+isZero : Tape Value.Value -> Bool
 isZero (Tape _ value _) =
-    value == 0
-
-
-run : (Tape Int -> Tape Int) -> Tape Int -> Tape Int
-run f tape =
-    f tape
+    value == Value.zero

@@ -6,7 +6,7 @@ import BrainFuck.Value as Value exposing (Value)
 
 
 type alias Model =
-    { tape : Tape Int
+    { tape : Tape Value
     , waitings : Maybe (List Char)
     , whileStack : List (List Char)
     , inputBuffer : InputBuffer
@@ -87,7 +87,7 @@ update model cs =
                     { model
                         | waitings = Just cs_
                         , whileStack = pushWhileStack model.whileStack c
-                        , outputBuffer = model.outputBuffer ++ [ Tape.putValue model.tape ]
+                        , outputBuffer = model.outputBuffer ++ [ model.tape |> Tape.putValue |> Value.toInt ]
                     }
 
                 '[' ->
