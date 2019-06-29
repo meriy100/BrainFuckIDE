@@ -1,5 +1,7 @@
 module BrainFuck.Parser exposing (Code, UnNormalized, cons, dropWhileEnd, toString, whileRange)
 
+import Regex as Rx
+
 
 type Normalized
     = Normalized
@@ -33,10 +35,9 @@ toString (Code _ str) =
     str
 
 
-
---
---normalize : Code UnNormalized -> Code Normalized
---normalize (Code _ str) =
+normalize : Code UnNormalized -> Code Normalized
+normalize (Code _ str) =
+    Rx.replace (Rx.fromString "[^,-><\\]\\[\\+]" |> Maybe.withDefault Rx.never) (\_ -> "") str |> Code Normalized
 
 
 toTokens : Code Normalized -> List Token
