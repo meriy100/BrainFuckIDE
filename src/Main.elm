@@ -1,5 +1,6 @@
 module Main exposing (Model, Msg(..), init, main, subscriptions, tdListView, update, view)
 
+import BrainFuck.Core as Core
 import BrainFuck.Parser as Parser
 import BrainFuck.Tape as Tape exposing (Tape)
 import Browser as Browser
@@ -12,9 +13,7 @@ import Task as Task
 type alias Model =
     { code : Parser.Code
     , input : String
-    , tape : Tape Int
-    , waitings : Maybe (List Char)
-    , whileStack : List (List Char)
+    , bfcore : Core.Model
     }
 
 
@@ -42,9 +41,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { code = Parser.Code "+++[->+>+<<]"
       , input = ""
-      , tape = Tape.init
-      , waitings = Nothing
-      , whileStack = []
+      , bfcore = Core.init
       }
     , Cmd.none
     )
@@ -76,7 +73,7 @@ view model =
                     [ Html.textarea [ Events.onInput ChangeInput, model.input |> Attributes.value ] []
                     ]
                 , Html.div []
-                    [ model.waitings
+                    [ model.bfcore.waitings
                         |> Maybe.withDefault []
                         |> List.map String.fromChar
                         |> String.join ""
@@ -87,12 +84,12 @@ view model =
                 , Html.div []
                     (List.map
                         (Html.p [] << List.singleton << Html.text << String.join "" << List.map String.fromChar)
-                        model.whileStack
+                        model.bfcore.whileStack
                     )
                 ]
             , Html.div [ Attributes.class "six columns" ]
                 [ Html.table []
-                    [ tdListView model.tape
+                    [ tdListView model.bfcore.tape
                         |> Html.tr []
                     ]
                 ]
@@ -114,90 +111,26 @@ update msg model =
             ( { model | input = str }, Cmd.none )
 
         Next _ ->
-            case model.waitings of
+            case model.bfcore.waitings of
                 Nothing ->
-                    ( { model | waitings = model.code |> codeToString |> String.toList |> Just }, Cmd.none )
+                    let
+                        bfcore =
+                            model.bfcore
+                    in
+                    ( { model | bfcore = { bfcore | waitings = model.code |> codeToString |> String.toList |> Just } }, Cmd.none )
 
                 Just cs ->
-                    case cs of
-                        c :: cs_ ->
-                            case c of
-                                '+' ->
-                                    ( { model
-                                        | tape = Tape.inc model.tape
-                                        , waitings = Just cs_
-                                        , whileStack = pushWhileStack model.whileStack c
-                                      }
-                                    , Cmd.none
-                                    )
-
-                                '-' ->
-                                    ( { model
-                                        | tape = Tape.dec model.tape
-                                        , waitings = Just cs_
-                                        , whileStack = pushWhileStack model.whileStack c
-                                      }
-                                    , Cmd.none
-                                    )
-
-                                '>' ->
-                                    ( { model
-                                        | tape = Tape.pointerInc model.tape
-                                        , waitings = Just cs_
-                                        , whileStack = pushWhileStack model.whileStack c
-                                      }
-                                    , Cmd.none
-                                    )
-
-                                '<' ->
-                                    ( { model
-                                        | tape = Tape.pointerDec model.tape
-                                        , waitings = Just cs_
-                                        , whileStack = pushWhileStack model.whileStack c
-                                      }
-                                    , Cmd.none
-                                    )
-
-                                '.' ->
-                                    ( model, Cmd.none )
-
-                                '[' ->
-                                    if model.tape |> Tape.isZero then
-                                        ( { model
-                                            | waitings = Just (cs_ |> Parser.dropWhileEnd)
-                                            , whileStack = ((model.whileStack |> List.head |> Maybe.withDefault []) ++ [ c ] ++ Parser.whileRange 0 cs_) :: (model.whileStack |> List.tail |> Maybe.withDefault [] |> List.tail |> Maybe.withDefault [])
-                                          }
-                                        , Cmd.none
-                                        )
-
-                                    else
-                                        ( { model
-                                            | waitings = Just cs_
-                                            , whileStack = [ c ] :: model.whileStack
-                                          }
-                                        , Cmd.none
-                                        )
-
-                                ']' ->
-                                    ( { model
-                                        | waitings = Just ((model.whileStack |> List.head |> Maybe.withDefault []) ++ cs)
-                                        , whileStack = model.whileStack |> List.tail |> Maybe.withDefault []
-                                      }
-                                    , Cmd.none
-                                    )
-
-                                _ ->
-                                    ( model, Cmd.none )
-
-                        [] ->
-                            ( model, Cmd.none )
+                    ( { model | bfcore = Core.update model.bfcore cs }, Cmd.none )
 
         Run ->
             let
                 f =
                     Parser.parse model.code
+
+                bfcore =
+                    model.bfcore
             in
-            ( { model | tape = Tape.run f model.tape }, Cmd.none )
+            ( { model | bfcore = { bfcore | tape = Tape.run f model.bfcore.tape } }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

@@ -1,4 +1,4 @@
-module BrainFuck.Value exposing (Value(..), decrement, fromInt, increment, toInt)
+module BrainFuck.Value exposing (Value, decrement, fromInt, increment, toInt)
 
 
 type Value
