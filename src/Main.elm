@@ -35,9 +35,13 @@ main =
         }
 
 
+sample =
+    ">+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.[-]>++++++++[<++++>-]<.>+++++++++++[<+++++>-]<.>++++++++[<+++>-]<.+++.------.--------.[-]>++++++++[<++++>-]<+.[-]++++++++++."
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { code = Parser.cons "+++[->+>+<<]"
+    ( { code = Parser.cons sample
       , input = ""
       , bfcore = Core.init
       }
@@ -70,20 +74,6 @@ view model =
                 , Html.div []
                     [ Html.textarea [ Events.onInput ChangeInput, model.input |> Attributes.value ] []
                     ]
-                , Html.div []
-                    [ model.bfcore.waitings
-                        |> Maybe.withDefault []
-                        |> List.map String.fromChar
-                        |> String.join ""
-                        |> Html.text
-                        |> List.singleton
-                        |> Html.p [ Attributes.style "color" "red" ]
-                    ]
-                , Html.div []
-                    (List.map
-                        (Html.p [] << List.singleton << Html.text << String.join "" << List.map String.fromChar)
-                        model.bfcore.whileStack
-                    )
                 ]
             , Html.div [ Attributes.class "six columns" ]
                 [ Html.table []
@@ -128,11 +118,7 @@ update msg model =
         Run ->
             case model.bfcore.waitings of
                 Nothing ->
-                    let
-                        bfcore =
-                            model.bfcore
-                    in
-                    CEx.withTrigger Next { model | bfcore = { bfcore | waitings = model.code |> Parser.toString |> String.toList |> Just, inputBuffer = model.input |> String.toList |> Core.InputBuffer } }
+                    CEx.withTrigger Next { model | bfcore = Core.setup model.code model.input }
 
                 Just cs ->
                     CEx.pure model

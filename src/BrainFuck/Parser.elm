@@ -1,4 +1,4 @@
-module BrainFuck.Parser exposing (Code, UnNormalized, cons, dropWhileEnd, toString, whileRange)
+module BrainFuck.Parser exposing (Code, Token(..), UnNormalized, cons, dropWhileEnd, toString, toTokens, whileRange)
 
 import Regex as Rx
 
@@ -40,45 +40,58 @@ normalize (Code _ str) =
     Rx.replace (Rx.fromString "[^,-><\\]\\[\\+]" |> Maybe.withDefault Rx.never) (\_ -> "") str |> Code Normalized
 
 
-toTokens : Code Normalized -> List Token
-toTokens (Code _ s) =
-    case '-' of
+toList : Code Normalized -> List Char
+toList (Code _ str) =
+    String.toList str
+
+
+charToTokens : Char -> Maybe Token
+charToTokens c =
+    case c of
         '+' ->
-            []
+            Just Increment
 
         '-' ->
-            []
+            Just Decrement
 
         '>' ->
-            []
+            Just PointerInc
 
         '<' ->
-            []
+            Just PointerDec
 
         ',' ->
-            []
+            Just Get
 
         '.' ->
-            []
+            Just Put
 
         '[' ->
-            []
+            Just While
 
         ']' ->
-            []
+            Just End
 
         _ ->
-            []
+            Nothing
 
 
+toTokens : Code UnNormalized -> List Token
+toTokens code =
+    normalize code
+        |> toList
+        |> List.filterMap charToTokens
+
+
+dropWhileEnd : List Token -> List Token
 dropWhileEnd cs =
     case cs of
         c :: cs_ ->
             case c of
-                '[' ->
+                While ->
                     dropWhileEnd (dropWhileEnd cs_)
 
-                ']' ->
+                End ->
                     cs_
 
                 _ ->
@@ -88,15 +101,15 @@ dropWhileEnd cs =
             []
 
 
-whileRange : Int -> List Char -> List Char
+whileRange : Int -> List Token -> List Token
 whileRange x cs =
     case cs of
         c :: cs_ ->
             case c of
-                '[' ->
+                While ->
                     c :: whileRange (x + 1) cs_
 
-                ']' ->
+                End ->
                     if x == 0 then
                         [ c ]
 
