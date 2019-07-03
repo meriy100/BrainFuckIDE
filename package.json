@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "elm-live": "elm-live src/Main.elm --pushstate -- --output=index.js --debug"
+    "elm-live": "elm-live src/Main.elm --pushstate -- --output=index.js --debug",
+    "webpack-build" : "webpack --config config/webpack.config.js",
+    "webpack-watch": "webpack --watch --config config/webpack.config.js"
   },
   "repository": "git+ssh://git@github.com/meriy100/BrainFuckIDE.git",
   "author": "meriy100 <kouta@meriy100.com>",
@@ -14,6 +16,8 @@
   },
   "homepage": "https://github.com/meriy100/BrainFuckIDE#readme",
   "dependencies": {
-    "codemirror": "^5.48.0"
+    "codemirror": "^5.48.0",
+    "webpack": "^4.35.2",
+    "webpack-cli": "^3.3.5"
   }
 }

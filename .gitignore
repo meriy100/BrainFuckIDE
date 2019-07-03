@@ -1,6 +1,7 @@
 .idea/
 elm-stuff/
 node_modules/
+build/
 
 index.js
 
