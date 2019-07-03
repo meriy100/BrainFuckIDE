@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), init, main, subscriptions, tdListView, update, view)
+port module Main exposing (Model, Msg(..), init, main, subscriptions, tdListView, update, view)
 
 import BrainFuck.Core as Core
 import BrainFuck.Parser as Parser
@@ -10,6 +10,9 @@ import Html as Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
 import Task as Task
+
+
+port codeOnInput : (String -> msg) -> Sub msg
 
 
 type alias Model =
@@ -60,7 +63,7 @@ tdListView tape =
 
 view : Model -> Html Msg
 view model =
-    Html.div [ Attributes.class "container" ]
+    Html.div []
         [ Html.h1 [] [ Html.text "Hello BF World!" ]
         , Html.div [ Attributes.class "row" ]
             [ Html.div [ Attributes.class "six columns" ]
@@ -68,11 +71,17 @@ view model =
                     [ Html.button [ Events.onClick Run ] [ Html.text "Run" ]
                     , Html.button [ Events.onClick Next ] [ Html.text "Next" ]
                     ]
-                , Html.div []
-                    [ Html.textarea [ Events.onInput ChangeCode, model.code |> Parser.toString |> Attributes.value ] []
-                    ]
-                , Html.div []
-                    [ Html.textarea [ Events.onInput ChangeInput, model.input |> Attributes.value ] []
+                ]
+            ]
+        , Html.div [ Attributes.class "row" ]
+            [ Html.div [ Attributes.class "six columns" ]
+                [ Html.div [ Attributes.class "editor" ]
+                    [ Html.textarea
+                        [ Attributes.id "editor"
+                        , Attributes.style "display" "none"
+                        , model.code |> Parser.toString |> Attributes.value
+                        ]
+                        []
                     ]
                 ]
             , Html.div [ Attributes.class "six columns" ]
@@ -82,12 +91,19 @@ view model =
                     ]
                 ]
             ]
-        , Html.div [ Attributes.class "six columns" ]
-            [ Html.p []
-                [ model.bfcore.outputBuffer
-                    |> List.map Char.fromCode
-                    |> String.fromList
-                    |> Html.text
+        , Html.div [ Attributes.class "row" ]
+            [ Html.div [ Attributes.class "six columns" ]
+                [ Html.div []
+                    [ Html.textarea [ Events.onInput ChangeInput, model.input |> Attributes.value ] []
+                    ]
+                ]
+            , Html.div [ Attributes.class "six columns" ]
+                [ Html.p []
+                    [ model.bfcore.outputBuffer
+                        |> List.map Char.fromCode
+                        |> String.fromList
+                        |> Html.text
+                    ]
                 ]
             ]
         ]
@@ -126,4 +142,6 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch
+        [ codeOnInput ChangeCode
+        ]
