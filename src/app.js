@@ -1,4 +1,4 @@
-import "./app.scss";
+import "./style/style.scss";
 import CodeMirror from "codemirror/lib/codemirror"
 import "codemirror/mode/brainfuck/brainfuck"
 
@@ -17,6 +17,9 @@ const initializer = setInterval(() => {
         app.ports.codeOnInput.send(editor.doc.getValue());
     });
     editor.setOption("extraKeys", {
+        ["Cmd-R"]: (cm) => {
+            app.ports.run.send();
+        },
         ["Ctrl-S"]: (cm) => {
             app.ports.save.send(editor.doc.getValue());
         },
