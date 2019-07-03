@@ -63,7 +63,7 @@ tdListView tape =
 
 view : Model -> Html Msg
 view model =
-    Html.div []
+    Html.div [ Attributes.class "e ]
         [ Html.h1 [] [ Html.text "Hello BF World!" ]
         , Html.div [ Attributes.class "row" ]
             [ Html.div [ Attributes.class "six columns" ]
@@ -124,12 +124,16 @@ update msg model =
                     CEx.pure model
 
                 Just cs ->
-                    case model.bfcore.inputBuffer of
-                        Core.Waiting ->
-                            CEx.pure model
+                    if model.bfcore.commandCount == 10000 then
+                        CEx.pure model
 
-                        _ ->
-                            CEx.withTrigger Next { model | bfcore = Core.update model.bfcore cs }
+                    else
+                        case model.bfcore.inputBuffer of
+                            Core.Waiting ->
+                                CEx.pure model
+
+                            _ ->
+                                CEx.withTrigger Next { model | bfcore = Core.update model.bfcore cs }
 
         Run ->
             case model.bfcore.waitings of

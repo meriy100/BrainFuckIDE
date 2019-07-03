@@ -11,6 +11,7 @@ type alias Model =
     , whileStack : List (List Parser.Token)
     , inputBuffer : InputBuffer
     , outputBuffer : List Int
+    , commandCount : Int
     }
 
 
@@ -25,6 +26,7 @@ init =
     , whileStack = []
     , inputBuffer = Waiting
     , outputBuffer = []
+    , commandCount = 0
     }
 
 
@@ -35,6 +37,7 @@ setup code input =
     , whileStack = []
     , inputBuffer = input |> String.toList |> InputBuffer
     , outputBuffer = []
+    , commandCount = 0
     }
 
 
@@ -52,6 +55,7 @@ update model cs =
                         | tape = Tape.inc model.tape
                         , waitings = Just cs_
                         , whileStack = pushWhileStack model.whileStack c
+                        , commandCount = model.commandCount + 1
                     }
 
                 Parser.Decrement ->
@@ -59,6 +63,7 @@ update model cs =
                         | tape = Tape.dec model.tape
                         , waitings = Just cs_
                         , whileStack = pushWhileStack model.whileStack c
+                        , commandCount = model.commandCount + 1
                     }
 
                 Parser.PointerInc ->
@@ -66,6 +71,7 @@ update model cs =
                         | tape = Tape.pointerInc model.tape
                         , waitings = Just cs_
                         , whileStack = pushWhileStack model.whileStack c
+                        , commandCount = model.commandCount + 1
                     }
 
                 Parser.PointerDec ->
@@ -73,6 +79,7 @@ update model cs =
                         | tape = Tape.pointerDec model.tape
                         , waitings = Just cs_
                         , whileStack = pushWhileStack model.whileStack c
+                        , commandCount = model.commandCount + 1
                     }
 
                 Parser.Get ->
@@ -91,6 +98,7 @@ update model cs =
                                 , waitings = Just cs_
                                 , whileStack = pushWhileStack model.whileStack c
                                 , inputBuffer = InputBuffer is
+                                , commandCount = model.commandCount + 1
                             }
 
                 Parser.Put ->
@@ -98,6 +106,7 @@ update model cs =
                         | waitings = Just cs_
                         , whileStack = pushWhileStack model.whileStack c
                         , outputBuffer = model.outputBuffer ++ [ model.tape |> Tape.putValue |> Value.toInt ]
+                        , commandCount = model.commandCount + 1
                     }
 
                 Parser.While ->
@@ -105,18 +114,21 @@ update model cs =
                         { model
                             | waitings = Just (cs_ |> Parser.dropWhileEnd)
                             , whileStack = ((model.whileStack |> List.head |> Maybe.withDefault []) ++ [ c ] ++ Parser.whileRange 0 cs_) :: (model.whileStack |> List.tail |> Maybe.withDefault [] |> List.tail |> Maybe.withDefault [])
+                            , commandCount = model.commandCount + 1
                         }
 
                     else
                         { model
                             | waitings = Just cs_
                             , whileStack = [ c ] :: model.whileStack
+                            , commandCount = model.commandCount + 1
                         }
 
                 Parser.End ->
                     { model
                         | waitings = Just ((model.whileStack |> List.head |> Maybe.withDefault []) ++ cs)
                         , whileStack = model.whileStack |> List.tail |> Maybe.withDefault []
+                        , commandCount = model.commandCount + 1
                     }
 
         [] ->
