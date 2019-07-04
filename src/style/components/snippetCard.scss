@@ -1,0 +1,19 @@
+.snippetCard {
+  background-color: #263238;
+  color: rgba(233, 237, 237, 1);
+  padding: 8px;
+
+  margin: 0 0 10px 0;
+  &:after {
+    margin: 0;
+  }
+
+  &__name {
+    color: rgba(199, 146, 234, 1);
+    font-size: 1.2em;
+  }
+
+  &__line {
+    margin: 0;
+  }
+}

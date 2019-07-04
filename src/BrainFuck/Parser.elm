@@ -1,4 +1,4 @@
-module BrainFuck.Parser exposing (Code, Token(..), UnNormalized, cons, dropWhileEnd, toString, toTokens, whileRange)
+module BrainFuck.Parser exposing (Code, Token(..), UnNormalized, cons, dropWhileEnd, none, toString, toTokens, whileRange)
 
 import Regex as Rx
 
@@ -29,6 +29,11 @@ type Token
 cons : String -> Code UnNormalized
 cons str =
     Code UnNormalized str
+
+
+none : Code UnNormalized
+none =
+    Code UnNormalized ""
 
 
 toString : Code UnNormalized -> String

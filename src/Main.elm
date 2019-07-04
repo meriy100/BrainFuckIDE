@@ -24,9 +24,6 @@ type alias CodeInputRecord =
 port codeOnInput : (CodeInputRecord -> msg) -> Sub msg
 
 
-port addSnippet : ( String, String ) -> Cmd msg
-
-
 port run : (Int -> msg) -> Sub msg
 
 
@@ -65,11 +62,7 @@ init codeStr =
       , snippets = snippets
       , bfcore = Core.init
       }
-    , Cmd.batch
-        (List.map
-            (\snippet -> addSnippet ( snippet.name, "snippetEditor-" ++ snippet.name ))
-            snippets
-        )
+    , Cmd.none
     )
 
 
@@ -88,13 +81,8 @@ viewSnippet snippet =
         [ Html.div [ Attributes.class "snippetCard__name" ]
             [ Html.text snippet.name
             ]
-        , Html.textarea
-            [ "snippetEditor-" ++ snippet.name |> Attributes.id
-            , snippet |> Snippet.codeString |> Attributes.value
-            ]
-            []
         , Snippet.codeString snippet
-            |> HH.nl2br
+            |> HH.nl2br [ Attributes.class "snippetCard__line" ]
             |> Html.div [ Attributes.class "snippetCard__code" ]
         ]
 
@@ -142,35 +130,12 @@ view model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChangeCode { inputType, snippetId, codeString } ->
-            case inputType of
-                "mainEditor" ->
-                    CEx.pure { model | code = Parser.cons codeString }
-
-                "snippetEditor" ->
-                    case snippetId of
-                        Just id ->
-                            let
-                                snippets =
-                                    List.map
-                                        (\s ->
-                                            if s.name == id then
-                                                { s | code = Parser.cons codeString }
-
-                                            else
-                                                s
-                                        )
-                                        model.snippets
-                            in
-                            CEx.pure { model | snippets = snippets }
-
-                        Nothing ->
-                            -- TODO : Error Handling
-                            CEx.pure model
-
-                _ ->
-                    -- TODO : Error Handling
-                    CEx.pure model
+        ChangeCode { codeString } ->
+            CEx.pure
+                { model
+                    | code = Parser.cons codeString
+                    , snippets = Parser.cons codeString |> Snippet.toSnippets
+                }
 
         ChangeInput str ->
             CEx.pure { model | input = str }
