@@ -17,8 +17,8 @@ const initializer = setInterval(() => {
         app.ports.codeOnInput.send(editor.doc.getValue());
     });
     editor.setOption("extraKeys", {
-        ["Cmd-R"]: (cm) => {
-            app.ports.run.send();
+        ["Ctrl-R"]: (cm) => {
+            app.ports.run.send(0);
         },
         ["Ctrl-S"]: (cm) => {
             app.ports.save.send(editor.doc.getValue());

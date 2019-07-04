@@ -15,7 +15,7 @@ import Task as Task
 port codeOnInput : (String -> msg) -> Sub msg
 
 
-port run : msg -> Sub msg
+port run : (Int -> msg) -> Sub msg
 
 
 type alias Model =
@@ -140,5 +140,5 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ codeOnInput ChangeCode
-        , run Run
+        , run (\_ -> Run)
         ]
