@@ -41,13 +41,9 @@ main =
         }
 
 
-sample =
-    ">+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.[-]>++++++++[<++++>-]<.>+++++++++++[<+++++>-]<.>++++++++[<+++>-]<.+++.------.--------.[-]>++++++++[<++++>-]<+.[-]++++++++++."
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { code = Parser.cons sample
+init : String -> ( Model, Cmd Msg )
+init codeStr =
+    ( { code = Parser.cons codeStr
       , input = ""
       , bfcore = Core.init
       }

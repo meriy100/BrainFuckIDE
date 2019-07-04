@@ -1,8 +1,9 @@
 import "./style/style.scss";
 import CodeMirror from "codemirror/lib/codemirror"
 import "codemirror/mode/brainfuck/brainfuck"
+import initial from './initial'
 
-const app = Elm.Main.init({node: document.getElementById("elm-node")});
+const app = Elm.Main.init({node: document.getElementById("elm-node"), flags: initial});
 const initializer = setInterval(() => {
     const textarea = document.getElementById("editor");
     if (!textarea) {
