@@ -2,6 +2,7 @@ port module Main exposing (Model, Msg(..), init, main, subscriptions, tdListView
 
 import BrainFuck.Core as Core
 import BrainFuck.Parser as Parser
+import BrainFuck.Snippet as Snippet
 import BrainFuck.Tape as Tape exposing (Tape)
 import BrainFuck.Value as Value
 import Browser as Browser
@@ -9,10 +10,21 @@ import Cmd.Extra as CEx
 import Html as Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
+import HtmlHelper as HH
 import Task as Task
 
 
-port codeOnInput : (String -> msg) -> Sub msg
+type alias CodeInputRecord =
+    { inputType : String
+    , snippetId : Maybe String
+    , codeString : String
+    }
+
+
+port codeOnInput : (CodeInputRecord -> msg) -> Sub msg
+
+
+port addSnippet : ( String, String ) -> Cmd msg
 
 
 port run : (Int -> msg) -> Sub msg
@@ -21,12 +33,13 @@ port run : (Int -> msg) -> Sub msg
 type alias Model =
     { code : Parser.Code Parser.UnNormalized
     , input : String
+    , snippets : List Snippet.Snippet
     , bfcore : Core.Model
     }
 
 
 type Msg
-    = ChangeCode String
+    = ChangeCode CodeInputRecord
     | ChangeInput String
     | Run
     | Next
@@ -43,11 +56,20 @@ main =
 
 init : String -> ( Model, Cmd Msg )
 init codeStr =
+    let
+        snippets =
+            Parser.cons codeStr |> Snippet.toSnippets
+    in
     ( { code = Parser.cons codeStr
       , input = ""
+      , snippets = snippets
       , bfcore = Core.init
       }
-    , Cmd.none
+    , Cmd.batch
+        (List.map
+            (\snippet -> addSnippet ( snippet.name, "snippetEditor-" ++ snippet.name ))
+            snippets
+        )
     )
 
 
@@ -58,6 +80,23 @@ tdListView tape =
         (Html.td [] << List.singleton << Html.text << String.fromInt << Value.toInt)
         tape
         |> Tape.toList
+
+
+viewSnippet : Snippet.Snippet -> Html Msg
+viewSnippet snippet =
+    Html.div [ Attributes.class "snippetCard" ]
+        [ Html.div [ Attributes.class "snippetCard__name" ]
+            [ Html.text snippet.name
+            ]
+        , Html.textarea
+            [ "snippetEditor-" ++ snippet.name |> Attributes.id
+            , snippet |> Snippet.codeString |> Attributes.value
+            ]
+            []
+        , Snippet.codeString snippet
+            |> HH.nl2br
+            |> Html.div [ Attributes.class "snippetCard__code" ]
+        ]
 
 
 view : Model -> Html Msg
@@ -92,6 +131,9 @@ view model =
                     [ tdListView model.bfcore.tape
                         |> Html.tr []
                     ]
+                , model.snippets
+                    |> List.map viewSnippet
+                    |> Html.div []
                 ]
             ]
         ]
@@ -100,8 +142,35 @@ view model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChangeCode str ->
-            CEx.pure { model | code = Parser.cons str }
+        ChangeCode { inputType, snippetId, codeString } ->
+            case inputType of
+                "mainEditor" ->
+                    CEx.pure { model | code = Parser.cons codeString }
+
+                "snippetEditor" ->
+                    case snippetId of
+                        Just id ->
+                            let
+                                snippets =
+                                    List.map
+                                        (\s ->
+                                            if s.name == id then
+                                                { s | code = Parser.cons codeString }
+
+                                            else
+                                                s
+                                        )
+                                        model.snippets
+                            in
+                            CEx.pure { model | snippets = snippets }
+
+                        Nothing ->
+                            -- TODO : Error Handling
+                            CEx.pure model
+
+                _ ->
+                    -- TODO : Error Handling
+                    CEx.pure model
 
         ChangeInput str ->
             CEx.pure { model | input = str }

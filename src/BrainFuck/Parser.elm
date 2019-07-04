@@ -31,6 +31,7 @@ cons str =
     Code UnNormalized str
 
 
+toString : Code UnNormalized -> String
 toString (Code _ str) =
     str
 
