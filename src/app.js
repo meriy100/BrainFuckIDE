@@ -16,8 +16,10 @@ const initializer = setInterval(() => {
     const editor = CodeMirror.fromTextArea(textarea, {
         lineNumbers: true,
         mode:  "brainfuck",
-        theme: "material"
+        theme: "material",
+        gutters: ["CodeMirror-linenumbers", "CodeMirror__breakpoints"]
     });
+
     editor.on('change', () => {
         app.ports.codeOnInput.send({ inputType: "mainEditor", snippetId: null, codeString: editor.doc.getValue() });
     });
@@ -32,5 +34,17 @@ const initializer = setInterval(() => {
             localStorage.setItem('mainCode', editor.doc.getValue())
         }
     });
+
+    editor.on("gutterClick", (cm, n) => {
+        const info = cm.lineInfo(n);
+        console.log(info)
+        cm.setGutterMarker(n, "CodeMirror__breakpoints", info.gutterMarkers ? null : makeMarker());
+    });
     clearInterval(initializer);
 }, 10);
+
+const makeMarker = () =>  {
+    const marker = document.createElement("div");
+    marker.setAttribute('class', 'CodeMirror__marker');
+    return marker;
+};

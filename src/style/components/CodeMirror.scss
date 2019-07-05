@@ -1,4 +1,14 @@
 .CodeMirror {
   height: 100%;
   font-family: Monaco, 'Andale Mono', 'Lucida Console', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+  &__marker {
+    &:after {
+     color: #822;
+      content: '●';
+    }
+  }
+
+  &__breakpoints {
+    width: .8em;
+  }
 }
