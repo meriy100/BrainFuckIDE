@@ -3,7 +3,11 @@ import CodeMirror from "codemirror/lib/codemirror"
 import "codemirror/mode/brainfuck/brainfuck"
 import initial from './initial'
 
-const app = Elm.Main.init({node: document.getElementById("elm-node"), flags: initial});
+const initialMainCode = () => {
+    return localStorage.getItem('mainCode') || initial
+};
+
+const app = Elm.Main.init({node: document.getElementById("elm-node"), flags: initialMainCode()});
 const initializer = setInterval(() => {
     const textarea = document.getElementById("editor");
     if (!textarea) {
@@ -22,8 +26,10 @@ const initializer = setInterval(() => {
             app.ports.run.send(0);
         },
         ["Ctrl-S"]: (cm) => {
+            localStorage.setItem('mainCode', editor.doc.getValue())
         },
         ["Cmd-S"]: (cm) => {
+            localStorage.setItem('mainCode', editor.doc.getValue())
         }
     });
     clearInterval(initializer);
