@@ -1,4 +1,4 @@
-module BrainFuck.Parser exposing (Code, Token(..), UnNormalized, cons, dropWhileEnd, none, toString, toTokens, whileRange)
+module BrainFuck.Parser exposing (Action(..), Code, Token, UnNormalized, cons, dropWhileEnd, none, toString, toTokens, whileRange)
 
 import Regex as Rx
 
@@ -12,10 +12,20 @@ type UnNormalized
 
 
 type Code a
-    = Code a String
+    = Code String
 
 
-type Token
+type alias LineNumber =
+    Int
+
+
+type alias Token =
+    { lineNumber : LineNumber
+    , action : Action
+    }
+
+
+type Action
     = Increment
     | Decrement
     | PointerInc
@@ -28,55 +38,76 @@ type Token
 
 cons : String -> Code UnNormalized
 cons str =
-    Code UnNormalized str
+    Code str
 
 
 none : Code UnNormalized
 none =
-    Code UnNormalized ""
+    Code ""
 
 
 toString : Code UnNormalized -> String
-toString (Code _ str) =
+toString (Code str) =
     str
 
 
 normalize : Code UnNormalized -> Code Normalized
-normalize (Code _ str) =
-    Rx.replace (Rx.fromString "[^,-><\\]\\[\\+]" |> Maybe.withDefault Rx.never) (\_ -> "") str |> Code Normalized
+normalize (Code str) =
+    --    Rx.replace (Rx.fromString "[^,-><\\]\\[\\+]" |> Maybe.withDefault Rx.never) (\_ -> "") str |> Code
+    Code str
 
 
-toList : Code Normalized -> List Char
-toList (Code _ str) =
+nlPattern : Rx.Regex
+nlPattern =
+    Rx.fromString "\n" |> Maybe.withDefault Rx.never
+
+
+splitNl : Code Normalized -> List ( LineNumber, Code Normalized )
+splitNl (Code str) =
+    Rx.split nlPattern str
+        |> List.map Code
+        |> List.indexedMap Tuple.pair
+
+
+f : ( LineNumber, Code Normalized ) -> List ( LineNumber, Char )
+f ( lineNumber, Code str ) =
     String.toList str
+        |> List.map (Tuple.pair lineNumber)
 
 
-charToTokens : Char -> Maybe Token
-charToTokens c =
+toList : List ( LineNumber, Code Normalized ) -> List ( LineNumber, Char )
+toList cs =
+    cs
+        |> List.map f
+        |> List.concat
+
+
+charToTokens : ( LineNumber, Char ) -> Maybe Token
+charToTokens ( n, c ) =
     case c of
         '+' ->
-            Just Increment
+            Just { lineNumber = n, action = Increment }
 
         '-' ->
-            Just Decrement
+            Just { lineNumber = n, action = Decrement }
 
         '>' ->
-            Just PointerInc
+            Just { lineNumber = n, action = PointerInc }
 
         '<' ->
-            Just PointerDec
+            Just { lineNumber = n, action = PointerDec }
 
         ',' ->
-            Just Get
+            Just { lineNumber = n, action = Get }
 
         '.' ->
-            Just Put
+            Just { lineNumber = n, action = Put }
 
         '[' ->
-            Just While
+            Just { lineNumber = n, action = While }
 
         ']' ->
-            Just End
+            Just { lineNumber = n, action = End }
 
         _ ->
             Nothing
@@ -85,45 +116,46 @@ charToTokens c =
 toTokens : Code UnNormalized -> List Token
 toTokens code =
     normalize code
+        |> splitNl
         |> toList
         |> List.filterMap charToTokens
 
 
 dropWhileEnd : List Token -> List Token
-dropWhileEnd cs =
-    case cs of
-        c :: cs_ ->
-            case c of
+dropWhileEnd ts =
+    case ts of
+        t :: ts_ ->
+            case t.action of
                 While ->
-                    dropWhileEnd (dropWhileEnd cs_)
+                    dropWhileEnd (dropWhileEnd ts_)
 
                 End ->
-                    cs_
+                    ts_
 
                 _ ->
-                    dropWhileEnd cs_
+                    dropWhileEnd ts_
 
         [] ->
             []
 
 
 whileRange : Int -> List Token -> List Token
-whileRange x cs =
-    case cs of
-        c :: cs_ ->
-            case c of
+whileRange x ts =
+    case ts of
+        t :: ts_ ->
+            case t.action of
                 While ->
-                    c :: whileRange (x + 1) cs_
+                    t :: whileRange (x + 1) ts_
 
                 End ->
                     if x == 0 then
-                        [ c ]
+                        [ t ]
 
                     else
-                        c :: whileRange (x - 1) cs_
+                        t :: whileRange (x - 1) ts_
 
                 _ ->
-                    c :: whileRange x cs_
+                    t :: whileRange x ts_
 
         [] ->
             []

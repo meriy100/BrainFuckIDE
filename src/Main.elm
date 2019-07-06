@@ -27,6 +27,12 @@ port codeOnInput : (CodeInputRecord -> msg) -> Sub msg
 port run : (Int -> msg) -> Sub msg
 
 
+port createBreakePoint : Int -> Cmd msg
+
+
+port destroyBreakePoint : Int -> Cmd msg
+
+
 type alias Model =
     { code : Parser.Code Parser.UnNormalized
     , input : String
