@@ -7,12 +7,24 @@ import BrainFuck.Value as Value exposing (Value)
 
 type alias Model =
     { tape : Tape Value
-    , waitings : Maybe (List Parser.Token)
-    , whileStack : List (List Parser.Token)
+    , waitings : Waitings
+    , whileStack : WhileStack
     , inputBuffer : InputBuffer
     , outputBuffer : List Int
-    , commandCount : Int
+    , commandCount : CommandCount
     }
+
+
+type alias Waitings =
+    Maybe (List Parser.Token)
+
+
+type alias WhileStack =
+    List (List Parser.Token)
+
+
+type alias CommandCount =
+    Int
 
 
 type InputBuffer
@@ -41,8 +53,19 @@ setup code input =
     }
 
 
-pushWhileStack whileStack c =
-    ((whileStack |> List.head |> Maybe.withDefault []) ++ [ c ]) :: (whileStack |> List.tail |> Maybe.withDefault [])
+pushWhileStack : WhileStack -> Parser.Token -> WhileStack
+pushWhileStack whileStack token =
+    ((whileStack |> List.head |> Maybe.withDefault []) ++ [ token ]) :: (whileStack |> List.tail |> Maybe.withDefault [])
+
+
+nextModel : Model -> Parser.Token -> List Parser.Token -> Tape Value -> Model
+nextModel model t ts nextTape =
+    { model
+        | tape = nextTape
+        , waitings = Just ts
+        , whileStack = pushWhileStack model.whileStack t
+        , commandCount = model.commandCount + 1
+    }
 
 
 update : Model -> List Parser.Token -> Model
@@ -51,36 +74,20 @@ update model ts =
         t :: ts_ ->
             case t.action of
                 Parser.Increment ->
-                    { model
-                        | tape = Tape.inc model.tape
-                        , waitings = Just ts_
-                        , whileStack = pushWhileStack model.whileStack t
-                        , commandCount = model.commandCount + 1
-                    }
+                    Tape.inc model.tape
+                        |> nextModel model t ts_
 
                 Parser.Decrement ->
-                    { model
-                        | tape = Tape.dec model.tape
-                        , waitings = Just ts_
-                        , whileStack = pushWhileStack model.whileStack t
-                        , commandCount = model.commandCount + 1
-                    }
+                    Tape.dec model.tape
+                        |> nextModel model t ts_
 
                 Parser.PointerInc ->
-                    { model
-                        | tape = Tape.pointerInc model.tape
-                        , waitings = Just ts_
-                        , whileStack = pushWhileStack model.whileStack t
-                        , commandCount = model.commandCount + 1
-                    }
+                    Tape.pointerInc model.tape
+                        |> nextModel model t ts_
 
                 Parser.PointerDec ->
-                    { model
-                        | tape = Tape.pointerDec model.tape
-                        , waitings = Just ts_
-                        , whileStack = pushWhileStack model.whileStack t
-                        , commandCount = model.commandCount + 1
-                    }
+                    Tape.pointerDec model.tape
+                        |> nextModel model t ts_
 
                 Parser.Get ->
                     case model.inputBuffer of
