@@ -68,75 +68,80 @@ nextModel model t ts nextTape =
     }
 
 
+next : Model -> Parser.Token -> List Parser.Token -> Model
+next model t ts_ =
+    case t.action of
+        Parser.Increment ->
+            Tape.inc model.tape
+                |> nextModel model t ts_
+
+        Parser.Decrement ->
+            Tape.dec model.tape
+                |> nextModel model t ts_
+
+        Parser.PointerInc ->
+            Tape.pointerInc model.tape
+                |> nextModel model t ts_
+
+        Parser.PointerDec ->
+            Tape.pointerDec model.tape
+                |> nextModel model t ts_
+
+        Parser.Get ->
+            case model.inputBuffer of
+                Waiting ->
+                    model
+
+                InputBuffer [] ->
+                    { model
+                        | inputBuffer = Waiting
+                    }
+
+                InputBuffer (i :: is) ->
+                    { model
+                        | tape = Tape.get i model.tape
+                        , waitings = Just ts_
+                        , whileStack = pushWhileStack model.whileStack t
+                        , inputBuffer = InputBuffer is
+                        , commandCount = model.commandCount + 1
+                    }
+
+        Parser.Put ->
+            { model
+                | waitings = Just ts_
+                , whileStack = pushWhileStack model.whileStack t
+                , outputBuffer = model.outputBuffer ++ [ model.tape |> Tape.putValue |> Value.toInt ]
+                , commandCount = model.commandCount + 1
+            }
+
+        Parser.While ->
+            if model.tape |> Tape.isZero then
+                { model
+                    | waitings = Just (ts_ |> Parser.dropWhileEnd)
+                    , whileStack = ((model.whileStack |> List.head |> Maybe.withDefault []) ++ [ t ] ++ Parser.whileRange 0 ts_) :: (model.whileStack |> List.tail |> Maybe.withDefault [] |> List.tail |> Maybe.withDefault [])
+                    , commandCount = model.commandCount + 1
+                }
+
+            else
+                { model
+                    | waitings = Just ts_
+                    , whileStack = [ t ] :: model.whileStack
+                    , commandCount = model.commandCount + 1
+                }
+
+        Parser.End ->
+            { model
+                | waitings = Just ((model.whileStack |> List.head |> Maybe.withDefault []) ++ (t :: ts_))
+                , whileStack = model.whileStack |> List.tail |> Maybe.withDefault []
+                , commandCount = model.commandCount + 1
+            }
+
+
 update : Model -> List Parser.Token -> Model
 update model ts =
     case ts of
         t :: ts_ ->
-            case t.action of
-                Parser.Increment ->
-                    Tape.inc model.tape
-                        |> nextModel model t ts_
-
-                Parser.Decrement ->
-                    Tape.dec model.tape
-                        |> nextModel model t ts_
-
-                Parser.PointerInc ->
-                    Tape.pointerInc model.tape
-                        |> nextModel model t ts_
-
-                Parser.PointerDec ->
-                    Tape.pointerDec model.tape
-                        |> nextModel model t ts_
-
-                Parser.Get ->
-                    case model.inputBuffer of
-                        Waiting ->
-                            model
-
-                        InputBuffer [] ->
-                            { model
-                                | inputBuffer = Waiting
-                            }
-
-                        InputBuffer (i :: is) ->
-                            { model
-                                | tape = Tape.get i model.tape
-                                , waitings = Just ts_
-                                , whileStack = pushWhileStack model.whileStack t
-                                , inputBuffer = InputBuffer is
-                                , commandCount = model.commandCount + 1
-                            }
-
-                Parser.Put ->
-                    { model
-                        | waitings = Just ts_
-                        , whileStack = pushWhileStack model.whileStack t
-                        , outputBuffer = model.outputBuffer ++ [ model.tape |> Tape.putValue |> Value.toInt ]
-                        , commandCount = model.commandCount + 1
-                    }
-
-                Parser.While ->
-                    if model.tape |> Tape.isZero then
-                        { model
-                            | waitings = Just (ts_ |> Parser.dropWhileEnd)
-                            , whileStack = ((model.whileStack |> List.head |> Maybe.withDefault []) ++ [ t ] ++ Parser.whileRange 0 ts_) :: (model.whileStack |> List.tail |> Maybe.withDefault [] |> List.tail |> Maybe.withDefault [])
-                            , commandCount = model.commandCount + 1
-                        }
-
-                    else
-                        { model
-                            | waitings = Just ts_
-                            , whileStack = [ t ] :: model.whileStack
-                            , commandCount = model.commandCount + 1
-                        }
-
-                Parser.End ->
-                    { model
-                        | waitings = Just ((model.whileStack |> List.head |> Maybe.withDefault []) ++ ts)
-                        , whileStack = model.whileStack |> List.tail |> Maybe.withDefault []
-                        , commandCount = model.commandCount + 1
-                    }
+            next model t ts_
 
         [] ->
             { model

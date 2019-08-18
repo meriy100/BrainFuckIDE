@@ -84,33 +84,34 @@ toList cs =
 
 charToTokens : ( LineNumber, Char ) -> Maybe Token
 charToTokens ( n, c ) =
-    case c of
-        '+' ->
-            Just { lineNumber = n, action = Increment }
+    Maybe.andThen (Just << Token n) <|
+        case c of
+            '+' ->
+                Just Increment
 
-        '-' ->
-            Just { lineNumber = n, action = Decrement }
+            '-' ->
+                Just Decrement
 
-        '>' ->
-            Just { lineNumber = n, action = PointerInc }
+            '>' ->
+                Just PointerInc
 
-        '<' ->
-            Just { lineNumber = n, action = PointerDec }
+            '<' ->
+                Just PointerDec
 
-        ',' ->
-            Just { lineNumber = n, action = Get }
+            ',' ->
+                Just Get
 
-        '.' ->
-            Just { lineNumber = n, action = Put }
+            '.' ->
+                Just Put
 
-        '[' ->
-            Just { lineNumber = n, action = While }
+            '[' ->
+                Just While
 
-        ']' ->
-            Just { lineNumber = n, action = End }
+            ']' ->
+                Just End
 
-        _ ->
-            Nothing
+            _ ->
+                Nothing
 
 
 toTokens : Code UnNormalized -> List Token
