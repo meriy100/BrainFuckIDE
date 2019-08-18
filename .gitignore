@@ -5,3 +5,7 @@ build/
 
 index.js
 
+backend/.env
+
+/**/.terraform/
+/**/terraform.*
