@@ -1,6 +1,9 @@
-# BrainFuckIDE
+# BrainFuckIDE (Alpha)
 BrainF*ckIDE (Elm)
 
+[demo](http://bfide.meriy100.com)
+
+[![Image from Gyazo](https://i.gyazo.com/f5f843f6b547cbc3d8c676bcd5ae9d80.png)](https://gyazo.com/f5f843f6b547cbc3d8c676bcd5ae9d80)
 
 ## Configuration
 
