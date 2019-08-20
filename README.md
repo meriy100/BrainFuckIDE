@@ -1,4 +1,4 @@
-# BrainFuckIDE (Alpha)
+# BrainF*ckIDE (Alpha)
 BrainF*ckIDE (Elm)
 
 [demo](http://bfide.meriy100.com)
